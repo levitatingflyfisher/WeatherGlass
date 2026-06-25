@@ -67,10 +67,7 @@ class SettingsScreen extends ConsumerWidget {
           const _Label('About'),
           const SizedBox(height: 8),
           Text('WeatherGlass', style: t.titleLarge),
-          Text('Read the sky. Tell no one.',
-              style: t.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic, color: cs.onSurfaceVariant)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'A calm, local-first weather app for the home. Free and open-source. '
             'Weather data by Open-Meteo.com (CC BY 4.0).',

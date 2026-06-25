@@ -42,55 +42,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _pages(List<SavedLocation> locations) {
     final clamped = _index.clamp(0, locations.length - 1);
+    final multi = locations.length > 1;
+    final topPad = MediaQuery.of(context).padding.top;
+    // The forecast scrolls full-bleed under the status bar, so pad its top to
+    // clear the overlay: the icon row, plus the city tabs when there's >1 place.
+    final inset = topPad + 50 + (multi ? 44 : 0);
+
     return Stack(
       children: [
         PageView(
           controller: _page,
           onPageChanged: (i) => setState(() => _index = i),
           children: [
-            for (final loc in locations) ForecastView(location: loc),
+            for (final loc in locations)
+              ForecastView(location: loc, topInset: inset),
           ],
         ),
-        // Top controls overlay.
         SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Row(
-              children: [
-                if (locations.length > 1)
-                  _GlassChip(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0; i < locations.length; i++)
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: i == clamped ? 16 : 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: Colors.white
-                                  .withValues(alpha: i == clamped ? 0.95 : 0.5),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                      ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    _GlassIconButton(
+                      icon: LucideIcons.mapPin,
+                      tooltip: 'Places',
+                      onTap: () => context.push('/places'),
                     ),
-                  ),
-                const Spacer(),
-                _GlassIconButton(
-                  icon: LucideIcons.mapPin,
-                  tooltip: 'Places',
-                  onTap: () => context.push('/places'),
+                    const SizedBox(width: 8),
+                    _GlassIconButton(
+                      icon: LucideIcons.settings,
+                      tooltip: 'Settings',
+                      onTap: () => context.push('/settings'),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                _GlassIconButton(
-                  icon: LucideIcons.settings,
-                  tooltip: 'Settings',
-                  onTap: () => context.push('/settings'),
+              ),
+              // Named, tappable city tabs — the obvious way to switch places
+              // (and to see at a glance that you have more than one).
+              if (multi)
+                _CityTabs(
+                  locations: locations,
+                  current: clamped,
+                  onSelect: (i) => _page.animateToPage(i,
+                      duration: const Duration(milliseconds: 320),
+                      curve: Curves.easeOutCubic),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ],
@@ -98,19 +99,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// A frosted dark pill that keeps white icons legible on any sky.
-class _GlassChip extends StatelessWidget {
-  const _GlassChip({required this.child});
-  final Widget child;
+/// A horizontal strip of frosted city pills — the current place highlighted —
+/// so switching between saved places is one obvious tap (not a hidden swipe).
+class _CityTabs extends StatelessWidget {
+  const _CityTabs(
+      {required this.locations, required this.current, required this.onSelect});
+  final List<SavedLocation> locations;
+  final int current;
+  final ValueChanged<int> onSelect;
+
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.20),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: child,
-      );
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: locations.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final sel = i == current;
+          final loc = locations[i];
+          return GestureDetector(
+            onTap: () => onSelect(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: sel ? 0.34 : 0.18),
+                borderRadius: BorderRadius.circular(19),
+                border: sel
+                    ? Border.all(
+                        color: Colors.white.withValues(alpha: 0.55), width: 1)
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (loc.isCurrent) ...[
+                    Icon(LucideIcons.navigation,
+                        size: 13,
+                        color: Colors.white.withValues(alpha: sel ? 0.95 : 0.7)),
+                    const SizedBox(width: 5),
+                  ],
+                  Text(
+                    loc.label,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: sel ? 0.98 : 0.74),
+                      fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _GlassIconButton extends StatelessWidget {
@@ -154,11 +201,10 @@ class _EmptyState extends ConsumerWidget {
                 size: 56,
                 color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 16),
-            Text('Read the sky.', style: t.headlineSmall),
+            Text('Add your first place', style: t.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Add a place to begin. WeatherGlass keeps everything on your device and '
-              'rounds your location to a coarse cell before it ever asks.',
+              'Search for a town or use your location — its forecast appears here.',
               textAlign: TextAlign.center,
               style: t.bodyMedium
                   ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),

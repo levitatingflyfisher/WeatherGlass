@@ -100,7 +100,11 @@ class _Loaded extends ConsumerWidget {
             ],
             _SectionLabel('7 days', palette: palette),
             const SizedBox(height: 8),
-            _DailyList(days: forecast.daily, units: units, palette: palette),
+            _DailyList(
+                days: forecast.daily,
+                units: units,
+                palette: palette,
+                currentC: c.temperatureC),
             const SizedBox(height: 24),
             _Attribution(palette: palette),
           ],
@@ -436,10 +440,14 @@ class _HourlyPainter extends CustomPainter {
 
 class _DailyList extends StatelessWidget {
   const _DailyList(
-      {required this.days, required this.units, required this.palette});
+      {required this.days,
+      required this.units,
+      required this.palette,
+      required this.currentC});
   final List<DailyPoint> days;
   final UnitSystem units;
   final SkyPalette palette;
+  final double currentC; // marks "now" on today's bar (Apple's dot)
 
   @override
   Widget build(BuildContext context) {
@@ -493,6 +501,8 @@ class _DailyList extends StatelessWidget {
                       weekLo: weekLo,
                       weekHi: weekHi,
                       track: palette.ink.withValues(alpha: 0.12),
+                      nowC: i == 0 ? currentC : null,
+                      nowRing: palette.top,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -521,9 +531,13 @@ class _RangeBar extends StatelessWidget {
     required this.weekLo,
     required this.weekHi,
     required this.track,
+    required this.nowRing,
+    this.nowC,
   });
   final double lo, hi, weekLo, weekHi;
   final Color track;
+  final Color nowRing;
+  final double? nowC; // current temp → a dot on today's bar (Apple's marker)
 
   static Color _temp(double c) {
     const cold = Color(0xFF6CA6E0), teal = Color(0xFF7BC0B6);
@@ -545,29 +559,45 @@ class _RangeBar extends StatelessWidget {
       final w = c.maxWidth;
       final left = a * w;
       final width = ((b - a) * w).clamp(10.0, w);
+      final children = <Widget>[
+        // The week-range track.
+        Container(
+          decoration: BoxDecoration(
+              color: track, borderRadius: BorderRadius.circular(4)),
+        ),
+        Positioned(
+          left: left,
+          width: width,
+          top: 0,
+          bottom: 0,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              gradient: LinearGradient(colors: [_temp(lo), _temp(hi)]),
+            ),
+          ),
+        ),
+      ];
+      // Apple's marker: where the current temperature sits in today's range.
+      if (nowC != null) {
+        final f = ((nowC! - weekLo) / span).clamp(0.0, 1.0);
+        children.add(Positioned(
+          left: (f * w - 4.5).clamp(0.0, w - 9),
+          top: -1,
+          child: Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: nowRing, width: 1.5),
+            ),
+          ),
+        ));
+      }
       return SizedBox(
         height: 7,
-        child: Stack(
-          children: [
-            // The week-range track.
-            Container(
-              decoration: BoxDecoration(
-                  color: track, borderRadius: BorderRadius.circular(4)),
-            ),
-            Positioned(
-              left: left,
-              width: width,
-              top: 0,
-              bottom: 0,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  gradient: LinearGradient(colors: [_temp(lo), _temp(hi)]),
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: Stack(clipBehavior: Clip.none, children: children),
       );
     });
   }

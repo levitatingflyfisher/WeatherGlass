@@ -1,6 +1,6 @@
 {
-    "name": "Glass",
-    "short_name": "Glass",
+    "name": "WeatherGlass",
+    "short_name": "WeatherGlass",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#F7FAFC",

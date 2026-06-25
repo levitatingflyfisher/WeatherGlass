@@ -1,9 +1,10 @@
 // lib/features/weather/data/open_meteo_client.dart
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:glass/features/weather/data/models.dart';
 
-/// A thin client over Open-Meteo — the one source Glass uses: no API key,
+/// A thin client over Open-Meteo — the one source WeatherGlass uses: no API key,
 /// wildcard CORS (callable from a pure browser PWA), no cookies, CC-BY 4.0 data.
 ///
 /// The whole privacy posture rests on [forecastUrl] sending a FIXED set of
@@ -60,11 +61,25 @@ class OpenMeteo {
 
   static String _coord(double v) => v.toString();
 
-  /// Fetch the raw forecast body (so callers can cache the JSON verbatim). No
-  /// custom headers: the browser controls them anyway and Open-Meteo requires
-  /// none, which keeps the request indistinguishable from any other client's.
+  /// GET with a short timeout and a couple of retries — Open-Meteo occasionally
+  /// drops a connection transiently, which would otherwise surface as a failed
+  /// search/forecast. No custom headers: the browser controls them anyway and
+  /// the endpoint needs none, so the request stays indistinguishable from any
+  /// other client's.
+  Future<http.Response> _get(Uri uri, {int attempts = 3}) async {
+    for (var i = 0;; i++) {
+      try {
+        return await _client.get(uri).timeout(const Duration(seconds: 12));
+      } catch (_) {
+        if (i >= attempts - 1) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 350 * (i + 1)));
+      }
+    }
+  }
+
+  /// Fetch the raw forecast body (so callers can cache the JSON verbatim).
   Future<String> fetchForecastJson(double lat, double lon) async {
-    final res = await _client.get(forecastUrl(lat, lon));
+    final res = await _get(forecastUrl(lat, lon));
     if (res.statusCode != 200) {
       throw WeatherException('Forecast request failed (${res.statusCode}).');
     }
@@ -77,7 +92,7 @@ class OpenMeteo {
   Future<List<GeoPlace>> searchPlaces(String query) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
-    final res = await _client.get(geocodeUrl(q));
+    final res = await _get(geocodeUrl(q));
     if (res.statusCode != 200) {
       throw WeatherException('Place search failed (${res.statusCode}).');
     }

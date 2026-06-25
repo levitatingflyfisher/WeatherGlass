@@ -14,14 +14,19 @@ part 'core_providers.g.dart';
 final sharedPreferencesProvider =
     Provider<SharedPreferences>((ref) => throw UnimplementedError());
 
-@riverpod
+// keepAlive: these own a closeable resource (the DB handle / the HTTP client).
+// As autoDispose providers they were torn down — and closed — the instant a
+// `ref.read` with no live listener returned, which aborted any in-flight request
+// (e.g. the place-search `ref.read(openMeteoProvider)` → "Search failed"). As
+// app-singletons they live for the session; onDispose now fires only at teardown.
+@Riverpod(keepAlive: true)
 AppDatabase appDatabase(Ref ref) {
   final db = AppDatabase();
   ref.onDispose(db.close);
   return db;
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 OpenMeteo openMeteo(Ref ref) {
   final client = OpenMeteo();
   ref.onDispose(client.close);

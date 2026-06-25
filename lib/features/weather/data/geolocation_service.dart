@@ -2,7 +2,7 @@
 import 'package:geolocator/geolocator.dart';
 
 /// A thin wrapper over geolocator for the optional "locate me" feature. Always
-/// requests LOW accuracy — Glass only needs a coarse fix and then rounds it
+/// requests LOW accuracy — WeatherGlass only needs a coarse fix and then rounds it
 /// further before storing. Returns null when location is unavailable or denied
 /// (the caller falls back to manual search).
 class GeolocationService {

@@ -7,7 +7,7 @@ part 'app_database.g.dart';
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
 /// A place the household watches the weather for. Coordinates are stored ALREADY
-/// rounded to the user's precision — Glass never persists a location finer than
+/// rounded to the user's precision — WeatherGlass never persists a location finer than
 /// it would send to a provider, so even a device dump leaks only a coarse cell.
 @DataClassName('SavedLocation')
 class SavedLocations extends Table {
@@ -25,7 +25,7 @@ class SavedLocations extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Cached forecast JSON per location. Opening Glass is instant and offline-
+/// Cached forecast JSON per location. Opening WeatherGlass is instant and offline-
 /// friendly, and we touch the network as little as possible — fewer requests
 /// means less for any observer to correlate.
 @DataClassName('CachedForecast')

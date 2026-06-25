@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:glass/features/weather/domain/weather_code.dart';
 
 /// The palette of an actual sky: a top→bottom gradient plus the ink colour that
-/// reads on it. Glass's signature is that the whole hero is painted from the
+/// reads on it. WeatherGlass's signature is that the whole hero is painted from the
 /// *real* current condition and time of day, so the screen looks like the sky
 /// outside the window.
 @immutable

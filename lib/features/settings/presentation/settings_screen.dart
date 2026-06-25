@@ -66,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
 
           const _Label('About'),
           const SizedBox(height: 8),
-          Text('Glass', style: t.titleLarge),
+          Text('WeatherGlass', style: t.titleLarge),
           Text('Read the sky. Tell no one.',
               style: t.bodyMedium?.copyWith(
                   fontStyle: FontStyle.italic, color: cs.onSurfaceVariant)),

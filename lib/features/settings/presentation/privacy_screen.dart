@@ -8,7 +8,7 @@ import 'package:glass/features/settings/settings_controller.dart';
 import 'package:glass/features/weather/data/open_meteo_client.dart';
 import 'package:glass/features/weather/domain/geo.dart';
 
-/// The soul of Glass: shows the user *exactly* what a weather request looks
+/// The soul of WeatherGlass: shows the user *exactly* what a weather request looks
 /// like, what is never sent, what genuinely can't be hidden, and lets them
 /// dial location precision. No hand-waving — the real URL is on screen.
 class PrivacyScreen extends ConsumerWidget {
@@ -33,7 +33,7 @@ class PrivacyScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Glass is local-first. Forecasts come straight from Open-Meteo with '
+            'WeatherGlass is local-first. Forecasts come straight from Open-Meteo with '
             'no account and no go-between. Here is the whole story.',
             style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
@@ -64,8 +64,8 @@ class PrivacyScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Any direct request shows the provider your device’s IP address — '
-            'that’s how the internet works, and Glass does not route through a '
-            'server of ours to mask it. What Glass does instead is reveal as '
+            'that’s how the internet works, and WeatherGlass does not route through a '
+            'server of ours to mask it. What WeatherGlass does instead is reveal as '
             'little as possible: a coarse, rounded location and aggressive '
             'caching so it asks rarely. Your set of saved places, seen from one '
             'IP over time, is still loosely correlatable — rounding and caching '
@@ -98,7 +98,7 @@ class PrivacyScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Weather data by Open-Meteo.com, licensed CC BY 4.0 '
-            '(creativecommons.org/licenses/by/4.0). Glass is free and '
+            '(creativecommons.org/licenses/by/4.0). WeatherGlass is free and '
             'open-source software.',
             style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
           ),

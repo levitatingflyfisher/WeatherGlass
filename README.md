@@ -1,8 +1,8 @@
-# Glass
+# WeatherGlass
 
 A calm, local-first **weather** app for the home. *Read the sky, tell no one.*
 
-Glass shows current conditions, the next hours, and the week ahead for the
+WeatherGlass shows current conditions, the next hours, and the week ahead for the
 places you care about — on a screen painted from the real sky. It is part of the
 **OpenHearth** family of small, private, open-source apps for domestic life.
 
@@ -14,7 +14,7 @@ places you care about — on a screen painted from the real sky. It is part of t
   how coarse — down to ~11 km) *before* anything is sent, and every request is
   keyless and cookieless: no API key, no token, no cache-buster, nothing that
   ties a request to you. That property is enforced by a test, not just a promise.
-- **Honest.** Any direct request still shows the provider your IP — Glass says
+- **Honest.** Any direct request still shows the provider your IP — WeatherGlass says
   so plainly on its "What leaves your device" screen rather than pretending
   otherwise. It just reveals as little as possible around that.
 - **No ads, no trackers, no analytics.**
@@ -30,11 +30,11 @@ only fully open-source weather source — keyless, CORS-friendly, and licensed
 ```sh
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run -d chrome          # or: flutter build web --base-href "/Glass/"
+flutter run -d chrome          # or: flutter build web --base-href "/WeatherGlass/"
 flutter build apk --split-per-abi --release
 ```
 
 ## Licence
 
-Glass is free and open-source software. Weather data © Open-Meteo.com,
+WeatherGlass is free and open-source software. Weather data © Open-Meteo.com,
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

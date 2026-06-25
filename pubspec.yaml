@@ -1,5 +1,5 @@
 name: glass
-description: Glass — a calm, local-first FLOSS weather app. Read the sky, tell no one.
+description: WeatherGlass — a calm, local-first FLOSS weather app. Read the sky, tell no one.
 publish_to: 'none'
 version: 0.1.0+1
 

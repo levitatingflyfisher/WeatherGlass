@@ -1,7 +1,7 @@
 // lib/features/weather/domain/geo.dart
 import 'dart:math' as math;
 
-/// How precisely Glass stores and queries a location.
+/// How precisely WeatherGlass stores and queries a location.
 ///
 /// Coordinate rounding is the one privacy lever a browser app actually controls
 /// (it cannot touch TLS/JA3 or the User-Agent). By rounding before anything is

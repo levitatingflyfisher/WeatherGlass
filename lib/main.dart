@@ -26,7 +26,7 @@ class GlassApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(settingsProvider).themeMode;
     return MaterialApp.router(
-      title: 'Glass',
+      title: 'WeatherGlass',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

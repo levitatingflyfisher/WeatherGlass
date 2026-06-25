@@ -1,14 +1,17 @@
-# Glass — design decisions
+# WeatherGlass — design decisions
 
 A calm, local-first FLOSS **weather** app for the OpenHearth fleet. PWA-first
 (Flutter) + sideload APK, like Furrow. Tagline: *"Read the sky. Tell no one."*
 
 ## Name
-**Glass** — the household *weather-glass* (the barometer by the door). Pairs with
-**Sundial** in the fleet (two antique domestic instruments), and carries the
-thesis: your own instrument, read at home, telling no one. ("Welkin" and "Vane"
-were dropped — both collide with existing weather apps; Google Glass is defunct,
-freeing the term, and no prominent FLOSS weather app is named "Glass".)
+**WeatherGlass** — the household *weather-glass* (the barometer by the door). Pairs
+with **Sundial** in the fleet (two antique domestic instruments), and carries the
+thesis: your own instrument, read at home, telling no one. Shipped first under the
+working name **Glass**, then renamed to **WeatherGlass** (2026-06-25) — "Glass"
+alone was ambiguous (Google Glass, generic), and "WeatherGlass" disambiguates while
+keeping the weather-glass metaphor. ("Welkin"/"Vane" were dropped earlier for
+collisions with existing weather apps.) Internal package id stays `glass`
+(invisible to users).
 
 ## Data source — Open-Meteo, only (from deep research)
 Open-Meteo is the single best fit and the only one used:
@@ -80,12 +83,12 @@ home-screen widget. The living-sky hero is the one aesthetic risk; everything
 else stays quiet.
 
 ## Deploy
-PWA → gh-pages (`flutter build web --base-href "/Glass/"`). The boot spinner +
+PWA → gh-pages (`flutter build web --base-href "/WeatherGlass/"`). The boot spinner +
 SW self-heal + `navigator.storage.persist()` are baked into **source**
 `web/index.html` this time (no re-splicing on each push). APK →
-`flutter build apk --split-per-abi --release` (debug-keystore) → `Glass.apk` on
+`flutter build apk --split-per-abi --release` (debug-keystore) → `WeatherGlass.apk` on
 a published `v0-apk` release. Landing card on `levitatingflyfisher.github.io`.
-Repo `levitatingflyfisher/Glass` — clean history from commit 1, neutral persona
+Repo `levitatingflyfisher/WeatherGlass` — clean history from commit 1, neutral persona
 (no Claude, no personal domain).
 
 ## Verified

@@ -157,7 +157,7 @@ class _EmptyState extends ConsumerWidget {
             Text('Read the sky.', style: t.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Add a place to begin. Glass keeps everything on your device and '
+              'Add a place to begin. WeatherGlass keeps everything on your device and '
               'rounds your location to a coarse cell before it ever asks.',
               textAlign: TextAlign.center,
               style: t.bodyMedium

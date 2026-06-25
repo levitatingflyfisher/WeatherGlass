@@ -1,6 +1,6 @@
 // lib/features/weather/domain/units.dart
 
-/// Display unit system. Glass always *requests* metric from the provider (a
+/// Display unit system. WeatherGlass always *requests* metric from the provider (a
 /// fixed request shape — the user's unit preference never changes the URL, so
 /// it can't add a fingerprint) and converts for display here.
 enum UnitSystem {

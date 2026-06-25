@@ -13,7 +13,7 @@ import 'package:glass/features/weather/domain/units.dart';
 import 'package:glass/features/weather/domain/weather_code.dart';
 
 /// One location's weather, painted on a sky drawn from its real current
-/// conditions and time of day. This is Glass's signature surface.
+/// conditions and time of day. This is WeatherGlass's signature surface.
 class ForecastView extends ConsumerWidget {
   const ForecastView({super.key, required this.location});
   final SavedLocation location;

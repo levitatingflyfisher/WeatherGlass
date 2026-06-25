@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#F7FAFC",
     "theme_color": "#3D82C9",
-    "description": "A calm, local-first FLOSS weather app. Read the sky, tell no one.",
+    "description": "A calm, local-first FLOSS weather app for the home.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

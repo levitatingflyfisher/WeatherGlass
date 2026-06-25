@@ -29,6 +29,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // The Places overview can ask Home to jump to a city; animate there, then
+    // clear the request.
+    ref.listen<String?>(selectedCityIdProvider, (_, id) {
+      if (id == null) return;
+      final locs = ref.read(savedLocationsProvider).valueOrNull ?? const [];
+      final idx = locs.indexWhere((l) => l.id == id);
+      if (idx >= 0 && _page.hasClients) {
+        _page.animateToPage(idx,
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic);
+        setState(() => _index = idx);
+      }
+      ref.read(selectedCityIdProvider.notifier).state = null;
+    });
+
     final async = ref.watch(savedLocationsProvider);
     return Scaffold(
       body: async.when(

@@ -14,6 +14,10 @@ part 'core_providers.g.dart';
 final sharedPreferencesProvider =
     Provider<SharedPreferences>((ref) => throw UnimplementedError());
 
+/// Set by the Places overview to ask Home to jump to a city (then Home clears
+/// it). Lets the list double as a switcher without coupling the two screens.
+final selectedCityIdProvider = StateProvider<String?>((ref) => null);
+
 // keepAlive: these own a closeable resource (the DB handle / the HTTP client).
 // As autoDispose providers they were torn down — and closed — the instant a
 // `ref.read` with no live listener returned, which aborted any in-flight request

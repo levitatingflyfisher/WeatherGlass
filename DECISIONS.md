@@ -96,3 +96,29 @@ Repo `levitatingflyfisher/WeatherGlass` — clean history from commit 1, neutral
 total green; `flutter analyze` clean; forecast goldens swept (clear-day / rain /
 clear-night) confirm the sky hero + layout with no overflow; live Open-Meteo
 schema + CORS confirmed by curl during design.
+
+## UI refinement round (2026-06-25, renamed app)
+- **City switching made obvious.** Replaced cryptic page-dots with a strip of
+  named, tappable **city tabs** (`_CityTabs` in home_screen) — current place
+  highlighted, always visible when >1 place, so multi-city is discoverable (not
+  hidden behind a swipe). PageView still swipes; tabs `animateToPage`. The
+  forecast gets a `topInset` so its content clears the overlay (icons + tabs).
+- **Hourly = a temperature curve, not number boxes.** `_HourlyGraph` /
+  `_HourlyPainter` (CustomPaint): a Catmull-Rom-smoothed temp line with a soft
+  gradient fill, temp labels on the data, condition glyphs (drawn via TextPainter
+  + the lucide icon font), and precip as quiet bars. Scaled to the window's own
+  min/max so the day's shape reads. Tufte-spirited (data-ink, no chartjunk).
+- **Daily = Apple-style range bars.** `_RangeBar`: each day's low→high as a bar
+  placed + sized against the whole week's span and tinted by a cold→warm ramp —
+  warm days sit right, cold left; bar length = the day's swing.
+- **Privacy copy toned down** (user: "overbearing"). Dropped the "Read the sky,
+  tell no one" tagline from the empty state, Settings/About, and the manifest/
+  index descriptions; the empty state now leads with weather. Removed the
+  per-forecast "What leaves your device" link (privacy still lives in Settings).
+- **Golden gotcha:** a CustomPainter's `TextPainter` text/icons render as tofu in
+  headless goldens (no font loaded) but render fine LIVE — verified by a live
+  Playwright drive (real temp labels on the curve, real moon/cloud glyphs).
+  Also: `intl` exports a `TextDirection` that clashes with Flutter's — import
+  intl with `hide TextDirection` when using `TextPainter`.
+- Deployed + live-verified at /WeatherGlass/; APK synced. (A deep-research pass
+  on Apple/Breezy Weather + Tufte ran alongside to inform further polish.)

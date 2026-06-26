@@ -120,5 +120,22 @@ schema + CORS confirmed by curl during design.
   Playwright drive (real temp labels on the curve, real moon/cloud glyphs).
   Also: `intl` exports a `TextDirection` that clashes with Flutter's — import
   intl with `hide TextDirection` when using `TextPainter`.
-- Deployed + live-verified at /WeatherGlass/; APK synced. (A deep-research pass
-  on Apple/Breezy Weather + Tufte ran alongside to inform further polish.)
+- Deployed + live-verified at /WeatherGlass/; APK synced.
+
+### Deep-research refinements (Apple Weather + Breezy/Geometric + Tufte)
+The research (101 agents, 23/25 claims confirmed) validated the design and added
+two concrete patterns:
+- **"Now" dot on today's range bar** (Apple): a white dot (sky-coloured ring)
+  marks where the *current* temperature falls within today's low→high bar — only
+  on today's row. Live-verified.
+- **Places = a directly-accessible overview** (research: "page/progress dots are
+  weak signifiers users miss; a directly-accessible list is clearest"). The
+  Places screen now shows each saved city's current temp + condition glyph
+  (cache-aware), and tapping a city jumps Home to it via `selectedCityIdProvider`
+  (Home listens + `animateToPage`). Live-verified (Berlin 32°☀ / London 35°☁).
+- Confirmed-as-is by the research: the **smooth hourly temp curve + gradient
+  fill** (Breezy's "conditions trend" + Tufte sparkline — data-ink 1.0, no
+  gridlines/axes) and the **week-scaled cold→warm daily range bars** (Apple). The
+  research suggested fl_chart over a hand-rolled painter; kept the working
+  CustomPainter (verified live, no new dep). Kept per-hour temp labels (usability)
+  rather than Tufte's min/max-only — Apple/Breezy also show per-hour numbers.

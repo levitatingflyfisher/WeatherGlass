@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static TextTheme get _textTheme => TextTheme(
-    displayLarge:  GoogleFonts.lora(fontSize: 57, fontWeight: FontWeight.w700),
-    displayMedium: GoogleFonts.lora(fontSize: 45, fontWeight: FontWeight.w700),
-    displaySmall:  GoogleFonts.lora(fontSize: 36, fontWeight: FontWeight.w700),
-    headlineLarge:  GoogleFonts.lora(fontSize: 32, fontWeight: FontWeight.w700),
-    headlineMedium: GoogleFonts.lora(fontSize: 28, fontWeight: FontWeight.w600),
-    headlineSmall:  GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w600),
-    titleLarge:  GoogleFonts.nunito(fontSize: 22, fontWeight: FontWeight.w700),
-    titleMedium: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
-    titleSmall:  GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600),
-    bodyLarge:  GoogleFonts.nunito(fontSize: 16),
-    bodyMedium: GoogleFonts.nunito(fontSize: 14),
-    bodySmall:  GoogleFonts.nunito(fontSize: 12),
-    labelLarge:  GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600),
-    labelMedium: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w500),
-    labelSmall:  GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w500),
-  );
+  // The Material-scale Lora/Nunito ladder now comes from openhearth_design's
+  // OhTypography.materialTextTheme — byte-identical to the const block this
+  // app hand-rolled before (pinned by material_text_theme_identity_test.dart
+  // and the goldens). Fonts stay BUNDLED (assets/fonts/, declared in pubspec)
+  // and are referenced by family — not fetched from fonts.gstatic.com at
+  // runtime. This keeps the app fully local-first: no font egress on first
+  // launch. See also app_text_styles.dart.
+  static const TextTheme _textTheme = OhTypography.materialTextTheme;
 
   static final light = ThemeData(
     useMaterial3: true,

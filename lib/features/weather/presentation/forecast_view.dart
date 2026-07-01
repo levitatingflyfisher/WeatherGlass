@@ -58,7 +58,8 @@ class _Loaded extends ConsumerWidget {
 
   Future<void> _refresh(WidgetRef ref) async {
     final repo = ref.read(weatherRepositoryProvider);
-    await repo.getForecast(location, force: true);
+    final precision = ref.read(settingsProvider).precision;
+    await repo.getForecast(location, precision: precision, force: true);
     ref.invalidate(forecastProvider(location.id));
   }
 

@@ -18,7 +18,7 @@ final _theme = ThemeData(
   colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3D82C9)),
 );
 
-SavedLocation _loc() => SavedLocation(
+SavedLocation _loc() => const SavedLocation(
       id: 'berlin',
       label: 'Berlin',
       sublabel: 'Germany',

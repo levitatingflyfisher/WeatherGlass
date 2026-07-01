@@ -38,7 +38,7 @@ void main() {
       expect(url.queryParameters['longitude'], '13.41');
       final other = OpenMeteo.forecastUrl(40.71, -74.01);
       // Everything except the coordinates is byte-identical between locations.
-      final fixedOf = (Uri u) => Map.of(u.queryParameters)
+      Map<String, String> fixedOf(Uri u) => Map.of(u.queryParameters)
         ..remove('latitude')
         ..remove('longitude');
       expect(fixedOf(other), fixedOf(url));

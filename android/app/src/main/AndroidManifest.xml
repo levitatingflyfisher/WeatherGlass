@@ -3,10 +3,18 @@
          "locate me" — never fine GPS (WeatherGlass rounds to a coarse grid anyway). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Local-first privacy promise: the OS must never sweep the plaintext
+         saved-locations DB (home coordinates) into Google cloud backup or a
+         device transfer. allowBackup + fullBackupContent cover pre-Android-12;
+         dataExtractionRules covers 12+. The encrypted .ohbk export is the
+         sanctioned backup path. Pinned by test/android/backup_config_test.dart. -->
     <application
         android:label="WeatherGlass"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

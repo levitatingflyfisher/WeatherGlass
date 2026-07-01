@@ -1,4 +1,6 @@
 // lib/features/weather/data/models.dart
+import 'dart:math' as math;
+
 import 'package:glass/features/weather/domain/weather_code.dart';
 
 /// A place from the geocoding search (also the shape we store as a saved
@@ -127,13 +129,20 @@ class Forecast {
       precipMm: (c['precipitation'] as num?)?.toDouble() ?? 0,
     );
 
+    // The parallel arrays are untrusted provider output: clamp every loop to
+    // the SHORTEST array so a length mismatch degrades to a shorter forecast
+    // instead of a RangeError (which, cached, would re-throw on every read).
+    int shortest(List<List<dynamic>> arrays) =>
+        arrays.map((a) => a.length).reduce(math.min);
+
     final h = j['hourly'] as Map<String, dynamic>;
     final ht = (h['time'] as List).cast<String>();
     final htemp = (h['temperature_2m'] as List);
     final hpp = (h['precipitation_probability'] as List);
     final hcode = (h['weather_code'] as List);
+    final hn = shortest([ht, htemp, hpp, hcode]);
     final hourly = [
-      for (var i = 0; i < ht.length; i++)
+      for (var i = 0; i < hn; i++)
         HourlyPoint(
           time: DateTime.parse(ht[i]),
           temperatureC: (htemp[i] as num).toDouble(),
@@ -150,16 +159,21 @@ class Forecast {
     final dpp = (d['precipitation_probability_max'] as List);
     final dsr = (d['sunrise'] as List?)?.cast<String?>();
     final dss = (d['sunset'] as List?)?.cast<String?>();
+    final dn = shortest([dt, dcode, dmax, dmin, dpp]);
+    // Sunrise/sunset are optional extras: a short one drops that day's sun
+    // times (null) rather than shortening the whole forecast.
+    String? at(List<String?>? a, int i) =>
+        (a != null && i < a.length) ? a[i] : null;
     final daily = [
-      for (var i = 0; i < dt.length; i++)
+      for (var i = 0; i < dn; i++)
         DailyPoint(
           date: DateTime.parse(dt[i]),
           weatherCode: (dcode[i] as num).toInt(),
           highC: (dmax[i] as num).toDouble(),
           lowC: (dmin[i] as num).toDouble(),
           precipProbabilityMax: (dpp[i] as num?)?.toInt() ?? 0,
-          sunrise: parse(dsr?[i]),
-          sunset: parse(dss?[i]),
+          sunrise: parse(at(dsr, i)),
+          sunset: parse(at(dss, i)),
         ),
     ];
 

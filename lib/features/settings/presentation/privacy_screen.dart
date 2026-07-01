@@ -58,6 +58,9 @@ class PrivacyScreen extends ConsumerWidget {
           const _GoodRow('No account, login, or email'),
           const _GoodRow('No analytics, ads, or trackers'),
           const _GoodRow('Your places and history stay on this device'),
+          const _GoodRow(
+              'An encrypted backup goes only to the share sheet you choose — '
+              'never to a server of ours'),
           const SizedBox(height: 24),
 
           const _Heading('Honestly, what we can’t hide', icon: LucideIcons.eye),
@@ -82,17 +85,24 @@ class PrivacyScreen extends ConsumerWidget {
             style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
-          for (final p in LocationPrecision.values)
-            RadioListTile<LocationPrecision>(
-              value: p,
-              groupValue: precision,
-              onChanged: (v) =>
-                  ref.read(settingsProvider.notifier).setPrecision(v!),
-              title: Text('${p.name[0].toUpperCase()}${p.name.substring(1)}'
-                  '  ·  ${p.cell}'),
-              subtitle: Text(p.blurb),
-              contentPadding: EdgeInsets.zero,
+          RadioGroup<LocationPrecision>(
+            groupValue: precision,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).setPrecision(v!),
+            child: Column(
+              children: [
+                for (final p in LocationPrecision.values)
+                  RadioListTile<LocationPrecision>(
+                    value: p,
+                    title: Text(
+                        '${p.name[0].toUpperCase()}${p.name.substring(1)}'
+                        '  ·  ${p.cell}'),
+                    subtitle: Text(p.blurb),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+              ],
             ),
+          ),
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),

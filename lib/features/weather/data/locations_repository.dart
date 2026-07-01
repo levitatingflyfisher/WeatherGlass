@@ -2,6 +2,7 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import 'package:glass/core/storage/app_database.dart';
+import 'package:glass/features/weather/domain/geo.dart';
 
 /// CRUD for saved places. Coordinates passed in are expected to be ALREADY
 /// rounded to the user's precision (the add/locate flows round at the boundary)
@@ -98,6 +99,24 @@ class LocationsRepository {
     await (_db.delete(_db.forecastCache)..where((t) => t.locationId.equals(id)))
         .go();
     await (_db.delete(_db.savedLocations)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Coarsen every saved row to [precision]'s grid, evicting the forecast
+  /// cache of each row that changed (its payload embeds the finer coordinate).
+  /// Called when the user lowers the precision setting: the promise is "a
+  /// device dump leaks only a coarse cell", so the finer coordinate must leave
+  /// the DB — not just the outbound URL. Rounding an already-coarse row is a
+  /// no-op, so raising precision changes nothing (rounding cannot be undone).
+  Future<void> reRoundAll(LocationPrecision precision) async {
+    for (final r in await all()) {
+      final (lat, lon) = roundForPrecision(r.lat, r.lon, precision);
+      if (lat == r.lat && lon == r.lon) continue;
+      await (_db.update(_db.savedLocations)..where((t) => t.id.equals(r.id)))
+          .write(SavedLocationsCompanion(lat: Value(lat), lon: Value(lon)));
+      await (_db.delete(_db.forecastCache)
+            ..where((t) => t.locationId.equals(r.id)))
+          .go();
+    }
   }
 
   Future<void> reorder(List<String> idsInOrder) async {

@@ -55,7 +55,19 @@ Stream<List<SavedLocation>> savedLocations(Ref ref) =>
 /// The forecast for one saved location (cache-aware). Invalidate to refresh.
 @riverpod
 Future<Forecast> forecast(Ref ref, String locationId) async {
-  final loc = await ref.watch(locationsRepositoryProvider).byId(locationId);
+  // Watch the saved-locations STREAM (not a one-shot byId) so a coordinate
+  // change to this place — e.g. re-resolving "My location" into a new rounded
+  // cell while Home stays mounted behind the add-sheet — recomputes the forecast
+  // instead of leaving the previous location's weather on screen. getForecast is
+  // cache-aware, so unchanged places re-resolve from cache (no extra network).
+  final locations = await ref.watch(savedLocationsProvider.future);
+  SavedLocation? loc;
+  for (final l in locations) {
+    if (l.id == locationId) {
+      loc = l;
+      break;
+    }
+  }
   if (loc == null) throw WeatherException('That place is no longer saved.');
   return ref.watch(weatherRepositoryProvider).getForecast(loc);
 }

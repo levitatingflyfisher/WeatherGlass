@@ -38,10 +38,22 @@ class WeatherRepository {
     if (!force) {
       final row = await _cached(loc.id);
       if (row != null && now - row.fetchedAt < ttl.inMilliseconds) {
-        return Forecast.fromJson(jsonDecode(row.payload) as Map<String, dynamic>);
+        try {
+          return Forecast.fromJson(
+              jsonDecode(row.payload) as Map<String, dynamic>);
+        } catch (_) {
+          // A row poisoned by an older build would otherwise re-throw on every
+          // read with no recovery — evict it and fall through to a fresh fetch.
+          await (_db.delete(_db.forecastCache)
+                ..where((t) => t.locationId.equals(loc.id)))
+              .go();
+        }
       }
     }
     final body = await _client.fetchForecastJson(lat, lon);
+    // Parse BEFORE caching so a valid-JSON-but-unparseable 200 body (e.g. `{}`)
+    // never reaches disk and poisons the cache.
+    final forecast = Forecast.fromJson(jsonDecode(body) as Map<String, dynamic>);
     await _db.into(_db.forecastCache).insertOnConflictUpdate(
           ForecastCacheCompanion.insert(
             locationId: loc.id,
@@ -49,7 +61,7 @@ class WeatherRepository {
             fetchedAt: now,
           ),
         );
-    return Forecast.fromJson(jsonDecode(body) as Map<String, dynamic>);
+    return forecast;
   }
 
   /// When the cache was last written for [locationId] (epoch ms), or null.

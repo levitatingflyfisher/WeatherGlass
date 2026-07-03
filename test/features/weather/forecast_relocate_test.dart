@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glass/core/providers/core_providers.dart';
 import 'package:glass/core/storage/app_database.dart';
+import 'package:glass/features/weather/data/locations_repository.dart';
 import 'package:glass/features/weather/data/open_meteo_client.dart';
+import 'package:glass/features/weather/data/weather_repository.dart';
+import 'package:glass/features/weather/domain/geo.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Relocating "My location" (re-resolving current into a new rounded cell)
 /// updates the saved row's coords and clears its cached forecast. The Home page
@@ -28,9 +32,12 @@ void main() {
 
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
       openMeteoProvider.overrideWithValue(OpenMeteo(client: mock)),
+      sharedPreferencesProvider.overrideWithValue(prefs),
     ]);
     addTearDown(container.dispose);
 
@@ -53,5 +60,34 @@ void main() {
         reason: 'a relocate must trigger a fresh forecast fetch');
     expect(requestedLats.last, isNot(firstLat),
         reason: 'the refetch must use the new coordinates, not the stale ones');
+  });
+
+  test('getForecast re-rounds to the CURRENT precision at the send boundary',
+      () async {
+    final fixture = File('test/features/weather/fixtures/forecast_berlin.json')
+        .readAsStringSync();
+    final sentLats = <String>[];
+    final mock = MockClient((req) async {
+      final lat = req.url.queryParameters['latitude'];
+      if (lat != null) sentLats.add(lat);
+      return http.Response(fixture, 200);
+    });
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = WeatherRepository(db, OpenMeteo(client: mock));
+
+    // A place saved earlier at block-scale (fine) precision.
+    await LocationsRepository(db)
+        .upsertCurrent(label: 'Home', lat: 12.345, lon: 98.765);
+    final loc = await db.select(db.savedLocations).getSingle();
+
+    // The user has since switched to the most-private (coarse) precision.
+    await repo.getForecast(loc, precision: LocationPrecision.coarse);
+
+    final (rlat, _) = roundForPrecision(12.345, 98.765, LocationPrecision.coarse);
+    expect(sentLats.single, rlat.toString(),
+        reason: 'the outbound request must carry the coarsened coordinate');
+    expect(sentLats.single, isNot('12.345'),
+        reason: 'the finer saved coordinate must NOT leak after lowering precision');
   });
 }

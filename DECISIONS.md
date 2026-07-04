@@ -89,7 +89,7 @@ SW self-heal + `navigator.storage.persist()` are baked into **source**
 `flutter build apk --split-per-abi --release` (debug-keystore) → `WeatherGlass.apk` on
 a published `v0-apk` release. Landing card on `levitatingflyfisher.github.io`.
 Repo `levitatingflyfisher/WeatherGlass` — clean history from commit 1, neutral persona
-(no Claude, no personal domain).
+(no AI attribution, no personal domain).
 
 ## Verified
 24 weather domain/data tests (incl. the 5-test privacy-invariant suite) + 36

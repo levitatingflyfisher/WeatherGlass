@@ -66,9 +66,9 @@ migrate_working_dir/
 .idea/
 
 # Local working artifacts — do not commit
+# (AGENTS.md is intentionally committed — it's the shipped agent+human guide)
 CLAUDE.md
 GEMINI.md
-AGENTS.md
 docs/superpowers/
 .superpowers/
 /docs/superpowers/

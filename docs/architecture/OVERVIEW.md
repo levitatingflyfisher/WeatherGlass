@@ -54,10 +54,10 @@ flowchart TD
     PROVIDER(["Open-Meteo<br/>keyless · CORS · CC BY 4.0"])
 
     ADD -->|"exact coord"| GEO
-    GEO -->|"① rounded coord only"| LOC
+    GEO -->|"(1) rounded coord only"| LOC
     HOME -->|"forecast(locationId)"| WREPO
-    WREPO -->|"fresh cache < 30 min?"| CACHE
-    WREPO -->|"② re-round at send boundary"| GEO
+    WREPO -->|"fresh cache under 30 min?"| CACHE
+    WREPO -->|"(2) re-round at send boundary"| GEO
     WREPO --> CLIENT
     CLIENT -->|"HTTPS: rounded coords + fixed params"| PROVIDER
     PROVIDER -->|"raw JSON"| WREPO

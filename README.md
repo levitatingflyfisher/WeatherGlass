@@ -32,7 +32,20 @@ only fully open-source weather source — keyless, CORS-friendly, and licensed
 
 ## Build
 
+WeatherGlass's encrypted backup is built on two shared packages consumed by
+**sibling path dependency** (`../packages/...`). Clone them next to
+WeatherGlass so the paths resolve:
+
+```
+packages/
+  sanctuary_auth_core/     # github: levitatingflyfisher/sanctuaryAuthCore
+  sanctuary_backup_ui/     # github: levitatingflyfisher/sanctuaryBackupUi
+Glass/                     # this repo
+```
+
 ```sh
+git clone https://github.com/levitatingflyfisher/sanctuaryAuthCore packages/sanctuary_auth_core
+git clone https://github.com/levitatingflyfisher/sanctuaryBackupUi packages/sanctuary_backup_ui
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 flutter run -d chrome          # or: flutter build web --base-href "/WeatherGlass/"

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:glass/features/sanctuary_backup/presentation/backup_settings_section.dart';
 import 'package:glass/features/settings/settings_controller.dart';
 import 'package:glass/features/weather/domain/units.dart';
 
@@ -62,6 +63,11 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/privacy'),
             ),
           ),
+          const SizedBox(height: 24),
+
+          const _Label('Backup & Restore'),
+          const SizedBox(height: 4),
+          const GlassBackupSection(),
           const SizedBox(height: 24),
 
           const _Label('About'),

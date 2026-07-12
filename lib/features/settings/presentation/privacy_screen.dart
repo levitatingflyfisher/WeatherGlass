@@ -58,6 +58,9 @@ class PrivacyScreen extends ConsumerWidget {
           const _GoodRow('No account, login, or email'),
           const _GoodRow('No analytics, ads, or trackers'),
           const _GoodRow('Your places and history stay on this device'),
+          const _GoodRow(
+              'An encrypted backup goes only to the share sheet you choose — '
+              'never to a server of ours'),
           const SizedBox(height: 24),
 
           const _Heading('Honestly, what we can’t hide', icon: LucideIcons.eye),

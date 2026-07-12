@@ -20,6 +20,7 @@ ceiling, see [privacy-model.md](../privacy-model.md); for the deliberate boundar
 | 30-min forecast cache + self-heal eviction | ✅ tested | `data/weather_repository.dart` |
 | Units (metric/imperial, client-side convert) | ✅ tested | `domain/units.dart` |
 | "What leaves your device" transparency screen | ✅ | `presentation/privacy_screen.dart` |
+| Encrypted backup/restore (saved places + settings, `.ohbk`) | ✅ tested | `features/sanctuary_backup/`, [how-to](../how-to/encrypted-backup.md) |
 | Bundled fonts, no third-party egress | ✅ regression-tested | `pubspec.yaml`, `test/shared/theme/offline_fonts_test.dart` |
 | Light/dark theme | ✅ | `settings_controller.dart` |
 | PWA (offline, persisted storage) | ✅ shipped | `web/` |
@@ -48,7 +49,9 @@ fights the keyless, no-backend design). See [limitations](../limitations.md).
 
 ## Testing
 
-~50 tests across `test/` — domain (`geo`, `sky`, `weather_code`, `units`), data
+~75 tests across `test/` — domain (`geo`, `sky`, `weather_code`, `units`), data
 (`forecast_parse`, `open_meteo_client`, cache poison, relocate), core (failures,
-provider keep-alive), plus golden images for the forecast view. No end-to-end network
-integration test; live behavior verified manually (`DECISIONS.md`).
+provider keep-alive), encrypted backup (serializer round-trip + schema/app rejection,
+controller flow against the real crypto core, settings widget + 320dp×3.0 textScale),
+plus golden images for the forecast view. No end-to-end network integration test; live
+behavior verified manually (`DECISIONS.md`).

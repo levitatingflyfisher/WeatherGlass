@@ -35,6 +35,8 @@ in `docs/tutorials/`.
   and a sideload release.
 - **[Verify the privacy invariant](how-to/verify-the-privacy-invariant.md)** — prove
   to yourself that the request is fingerprint-free.
+- **[Encrypted backup](how-to/encrypted-backup.md)** — set up, export, and restore
+  a `.ohbk` file; the recovery-phrase honesty and the destructive-restore contract.
 
 ## Reference
 *Information-oriented — tell me exactly, precisely, completely.*

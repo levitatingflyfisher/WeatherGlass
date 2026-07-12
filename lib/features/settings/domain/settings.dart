@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:glass/features/weather/domain/geo.dart';
 import 'package:glass/features/weather/domain/units.dart';
 
+/// The [SharedPreferences] keys backing [GlassSettings] — a single source of
+/// truth shared by [Settings] (which reads/writes them) and the encrypted
+/// backup serializer (which must restore to the exact same keys).
+abstract final class SettingsPrefsKeys {
+  static const units = 'units';
+  static const precision = 'precision';
+  static const themeMode = 'themeMode';
+}
+
 /// The household's preferences. All local; nothing leaves the device, and none
 /// of these alter the request shape sent to the provider.
 @immutable

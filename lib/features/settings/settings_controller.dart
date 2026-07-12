@@ -13,32 +13,35 @@ part 'settings_controller.g.dart';
 /// tiny key→values and want a synchronous first read for a flicker-free launch.
 @riverpod
 class Settings extends _$Settings {
-  static const _kUnits = 'units';
-  static const _kPrecision = 'precision';
-  static const _kTheme = 'themeMode';
-
   @override
   GlassSettings build() {
     final p = ref.watch(sharedPreferencesProvider);
     return GlassSettings(
-      units: UnitSystem.fromName(p.getString(_kUnits)),
-      precision: LocationPrecision.fromName(p.getString(_kPrecision)),
-      themeMode: themeModeFromName(p.getString(_kTheme)),
+      units: UnitSystem.fromName(p.getString(SettingsPrefsKeys.units)),
+      precision:
+          LocationPrecision.fromName(p.getString(SettingsPrefsKeys.precision)),
+      themeMode: themeModeFromName(p.getString(SettingsPrefsKeys.themeMode)),
     );
   }
 
   Future<void> setUnits(UnitSystem u) async {
-    await ref.read(sharedPreferencesProvider).setString(_kUnits, u.name);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(SettingsPrefsKeys.units, u.name);
     state = state.copyWith(units: u);
   }
 
   Future<void> setPrecision(LocationPrecision p) async {
-    await ref.read(sharedPreferencesProvider).setString(_kPrecision, p.name);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(SettingsPrefsKeys.precision, p.name);
     state = state.copyWith(precision: p);
   }
 
   Future<void> setThemeMode(ThemeMode m) async {
-    await ref.read(sharedPreferencesProvider).setString(_kTheme, m.name);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(SettingsPrefsKeys.themeMode, m.name);
     state = state.copyWith(themeMode: m);
   }
 }

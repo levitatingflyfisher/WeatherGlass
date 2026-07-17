@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:sanctuary_auth_core/sanctuary_auth_core.dart'
-    show BackupFormatException;
 import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,7 +29,8 @@ import '../../settings/domain/settings.dart';
 /// before any write; only once everything has been checked does the Drift
 /// transaction run, followed by the (non-transactional, but by-then
 /// guaranteed-valid) preference writes.
-class GlassBackupSerializer implements BackupSerializer {
+class GlassBackupSerializer
+    implements BackupSerializer, PreviewableBackupSerializer {
   static const _appId = 'weatherglass';
 
   final AppDatabase _db;
@@ -45,10 +44,18 @@ class GlassBackupSerializer implements BackupSerializer {
   Future<Uint8List> dumpAll() async {
     final allLocations = await _db.select(_db.savedLocations).get();
 
+    // The shape is WeatherGlass's SHIPPED one (`app`/`schemaVersion`/
+    // `exportedAt`/top-level `tables`+`settings`) with one ADDITIVE key the
+    // v0.2.0 retention spec needs (`createdAt`, feeding preview/staleness
+    // copy). Shipped readers ignore unknown keys, so backups made by this
+    // build still restore on pre-v0.2.0 installs — the wire format is
+    // extended, never broken.
+    final stamp = DateTime.now().toUtc().toIso8601String();
     final payload = <String, dynamic>{
       'app': _appId,
       'schemaVersion': _db.schemaVersion,
-      'exportedAt': DateTime.now().toUtc().toIso8601String(),
+      'exportedAt': stamp,
+      'createdAt': stamp,
       'tables': {
         'savedLocations': allLocations.map((r) => r.toJson()).toList(),
       },
@@ -62,48 +69,61 @@ class GlassBackupSerializer implements BackupSerializer {
     return Uint8List.fromList(utf8.encode(jsonEncode(payload)));
   }
 
+  /// The dry-run parse behind preview-before-restore and export
+  /// verify-by-read-back: validates exactly like [restoreAll] (envelope via
+  /// [BackupEnvelope.unwrap], content via [_requireContent]) and reports
+  /// row counts — but never writes.
+  @override
+  Future<BackupManifest> describeBackup(Uint8List plaintext) async {
+    _requireContent(_unwrap(plaintext).payload);
+    return BackupEnvelope.describe(plaintext);
+  }
+
+  /// The content gate [restoreAll] applies past the envelope — shared so
+  /// describe and restore can never drift apart (the Sundial/Lullaby
+  /// shared-gate pattern). `settings` is load-bearing here: losing the
+  /// `precision` snapshot would silently widen the coordinate-rounding
+  /// cell, so a payload without it is rejected, not tolerated.
+  static ({Map<String, dynamic> tables, Map<String, dynamic> settings})
+      _requireContent(Map<String, Object?> payload) {
+    final tables = payload['tables'];
+    if (tables is! Map<String, dynamic>) {
+      throw const FormatException('Missing tables in backup payload');
+    }
+    final settings = payload['settings'];
+    if (settings is! Map<String, dynamic>) {
+      throw const FormatException('Missing settings in backup payload');
+    }
+    return (tables: tables, settings: settings);
+  }
+
+  /// Envelope validation via the shared fleet helper. WeatherGlass has
+  /// always emitted the `app` key, so the strict default (requireAppKey:
+  /// true) applies; unwrap stays tolerant of the shipped shape (top-level
+  /// `tables`, `exportedAt` as the stamp, no `payload` key).
+  UnwrappedBackup _unwrap(Uint8List data) => BackupEnvelope.unwrap(
+        data,
+        expectedAppId: _appId,
+        currentSchemaVersion: _db.schemaVersion,
+      );
+
   /// Restores saved places and settings from a JSON [Uint8List] previously
   /// created by [dumpAll].
   ///
   /// **This is destructive** — existing saved places (and the forecast
   /// cache, which isn't part of the backup) are wiped before inserting.
   ///
-  /// Throws [BackupFormatException] if the payload is from a different app.
+  /// Throws [FormatException] if the payload is not valid JSON, is from a
+  /// different app, or is missing required fields.
   /// Throws [BackupSchemaException] if the payload's schema version is newer
   /// than the current database version.
-  /// Throws [FormatException] if the payload is not valid JSON or is missing
-  /// required fields.
   @override
   Future<void> restoreAll(Uint8List data) async {
-    final json = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
-
     // Everything is validated before any write — a rejected restore must
     // never touch existing data or settings (SANCTUARY-BRIEF §2.4/§2.8).
-    final app = json['app'] as String?;
-    if (app != _appId) {
-      throw BackupFormatException(
-        'This backup is from a different app ("${app ?? 'unknown'}"), not WeatherGlass.',
-      );
-    }
-
-    final version = json['schemaVersion'] as int?;
-    if (version == null) {
-      throw const FormatException('Missing schemaVersion in backup payload');
-    }
-    if (version > _db.schemaVersion) {
-      throw BackupSchemaException(version, _db.schemaVersion);
-    }
-
-    final tables = json['tables'] as Map<String, dynamic>?;
-    if (tables == null) {
-      throw const FormatException('Missing tables in backup payload');
-    }
-    final locations = _jsonList(tables, 'savedLocations');
-
-    final settings = json['settings'] as Map<String, dynamic>?;
-    if (settings == null) {
-      throw const FormatException('Missing settings in backup payload');
-    }
+    final content = _requireContent(_unwrap(data).payload);
+    final locations = _jsonList(content.tables, 'savedLocations');
+    final settings = content.settings;
 
     // SavedLocations is a leaf table (no FKs) and ForecastCache is excluded
     // from the backup entirely, so there's no insert ordering to worry

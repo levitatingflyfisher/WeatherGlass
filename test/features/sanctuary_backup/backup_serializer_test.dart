@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:glass/core/storage/app_database.dart';
 import 'package:glass/features/sanctuary_backup/data/backup_serializer.dart';
 import 'package:glass/features/settings/domain/settings.dart';
-import 'package:sanctuary_auth_core/sanctuary_auth_core.dart' show BackupFormatException;
 import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -163,6 +162,56 @@ void main() {
       expect(cache, isEmpty);
     });
 
+    test('dumpAll adds createdAt ADDITIVELY, keeping every legacy key',
+        () async {
+      final bytes = await serializer.dumpAll();
+      final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+
+      // The v0.2.0 stamp preview/staleness copy needs...
+      expect(DateTime.tryParse(json['createdAt'] as String), isNotNull);
+      // ...WITHOUT dropping any key the shipped app reads (wire-compat:
+      // an old install must still restore backups made by this build).
+      expect(json['app'], 'weatherglass');
+      expect(json['schemaVersion'], db.schemaVersion);
+      expect(json['exportedAt'], json['createdAt']);
+      expect(json['tables'], isA<Map<String, dynamic>>());
+      expect(json['settings'], isA<Map<String, dynamic>>());
+    });
+
+    test('a legacy blob (no createdAt) still restores — tolerant unwrap',
+        () async {
+      // Byte-for-byte the shape every shipped WeatherGlass build wrote:
+      // app/schemaVersion/exportedAt/tables/settings, no createdAt.
+      final legacy = Uint8List.fromList(utf8.encode(jsonEncode({
+        'app': 'weatherglass',
+        'schemaVersion': 1,
+        'exportedAt': '2026-01-01T00:00:00.000Z',
+        'tables': {
+          'savedLocations': [
+            {
+              'id': 'legacy1',
+              'label': 'Oslo',
+              'sublabel': null,
+              'lat': 59.91,
+              'lon': 10.75,
+              'isCurrent': false,
+              'sortOrder': 0,
+              'createdAt': 500,
+            },
+          ],
+        },
+        'settings': {'units': 'metric', 'precision': 'coarse',
+            'themeMode': 'light'},
+      })));
+
+      await serializer.restoreAll(legacy);
+
+      final locations = await db.select(db.savedLocations).get();
+      expect(locations.single.id, 'legacy1');
+      expect(locations.single.label, 'Oslo');
+      expect(prefs.getString(SettingsPrefsKeys.units), 'metric');
+    });
+
     test('restoreAll rejects a backup from a different app', () async {
       final payload = jsonEncode({
         'app': 'lullaby',
@@ -173,9 +222,11 @@ void main() {
       });
       final bytes = Uint8List.fromList(utf8.encode(payload));
 
+      // BackupEnvelope.unwrap reports a mismatched app as FormatException
+      // (v0.1.0's hand-rolled check threw BackupFormatException).
       expect(
         () => serializer.restoreAll(bytes),
-        throwsA(isA<BackupFormatException>()),
+        throwsA(isA<FormatException>()),
       );
     });
 
@@ -256,6 +307,83 @@ void main() {
       expect(locations, hasLength(1), reason: 'original data must survive');
       expect(prefs.getString(SettingsPrefsKeys.units), equals('imperial'),
           reason: 'original settings must survive');
+    });
+  });
+
+  group('describeBackup (PreviewableBackupSerializer)', () {
+    test('describes a valid backup without writing anything', () async {
+      await seedLocation();
+      await prefs.setString(SettingsPrefsKeys.units, 'imperial');
+      final bytes = await serializer.dumpAll();
+
+      // Wipe, then describe — a dry run must not resurrect anything.
+      await db.delete(db.savedLocations).go();
+      final manifest = await serializer.describeBackup(bytes);
+
+      expect(manifest.appId, 'weatherglass');
+      expect(manifest.schemaVersion, db.schemaVersion);
+      expect(manifest.createdAt, isNotNull);
+      expect(manifest.tableCounts['savedLocations'], 1);
+      expect(await db.select(db.savedLocations).get(), isEmpty,
+          reason: 'describe must never write');
+    });
+
+    test('reads createdAt from a legacy exportedAt stamp', () async {
+      final legacy = Uint8List.fromList(utf8.encode(jsonEncode({
+        'app': 'weatherglass',
+        'schemaVersion': 1,
+        'exportedAt': '2026-01-01T00:00:00.000Z',
+        'tables': {'savedLocations': <dynamic>[]},
+        'settings': <String, dynamic>{},
+      })));
+
+      final manifest = await serializer.describeBackup(legacy);
+      expect(manifest.createdAt, DateTime.utc(2026, 1, 1));
+    });
+
+    test('shares restoreAll\'s gate: rejects exactly what restore rejects',
+        () async {
+      Uint8List blob(Map<String, dynamic> json) =>
+          Uint8List.fromList(utf8.encode(jsonEncode(json)));
+
+      // Wrong app.
+      await expectLater(
+        () => serializer.describeBackup(blob({
+          'app': 'lullaby',
+          'schemaVersion': 1,
+          'tables': {'savedLocations': <dynamic>[]},
+          'settings': <String, dynamic>{},
+        })),
+        throwsA(isA<FormatException>()),
+      );
+      // Future schema.
+      await expectLater(
+        () => serializer.describeBackup(blob({
+          'app': 'weatherglass',
+          'schemaVersion': 999,
+          'tables': {'savedLocations': <dynamic>[]},
+          'settings': <String, dynamic>{},
+        })),
+        throwsA(isA<BackupSchemaException>()),
+      );
+      // Missing tables.
+      await expectLater(
+        () => serializer.describeBackup(blob({
+          'app': 'weatherglass',
+          'schemaVersion': 1,
+          'settings': <String, dynamic>{},
+        })),
+        throwsA(isA<FormatException>()),
+      );
+      // Missing settings.
+      await expectLater(
+        () => serializer.describeBackup(blob({
+          'app': 'weatherglass',
+          'schemaVersion': 1,
+          'tables': {'savedLocations': <dynamic>[]},
+        })),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 }

@@ -23,6 +23,9 @@ All notable changes to WeatherGlass will be documented in this file.
   read new backups — no legacy key was removed or renamed).
 - Silent freshness snapshot on app open when the newest one is older
   than 7 days (never blocks boot, never surfaces errors).
+- `DateTime` helpers synced to the fleet superset (additive only):
+  `dateOnly`, `startOfWeek`, DST-safe `daysBetweenDates`, and
+  `minutesToLabel`. Existing helpers and callers untouched.
 
 ### Changed
 - Backup/restore now rides `sanctuary_backup_ui` 0.2.0.

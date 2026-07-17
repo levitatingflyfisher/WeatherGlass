@@ -32,6 +32,9 @@ Widget _wrap({
         ),
       ),
       backupSerializerProvider.overrideWithValue(FakeBackupSerializer()),
+      // The "Previous backups" sheet lists the vault; the default
+      // FileVaultStore needs path_provider, absent in widget tests.
+      vaultStoreProvider.overrideWithValue(InMemoryVaultStore()),
     ],
     child: MaterialApp(
       builder: (context, child) => MediaQuery(
@@ -132,6 +135,51 @@ void main() {
         find.text('Save an encrypted copy of your places and settings'),
         findsOneWidget,
       );
+    });
+
+    testWidgets(
+        'vault + plain-JSON tiles are always available — even in ghost state',
+        (tester) async {
+      await tester.pumpWidget(_wrap(store: InMemorySecureKeyStore()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Previous backups'), findsOneWidget);
+      expect(find.text('Export as plain JSON'), findsOneWidget);
+      expect(find.text('Unencrypted — readable by any program'),
+          findsOneWidget);
+    });
+
+    testWidgets('Previous backups tile opens the snapshot vault sheet',
+        (tester) async {
+      await tester.pumpWidget(_wrap(store: InMemorySecureKeyStore()));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Previous backups'));
+      await tester.tap(find.text('Previous backups'));
+      await tester.pumpAndSettle();
+
+      // The sheet is open: its header plus the empty-vault explainer.
+      expect(find.text('Previous backups'), findsNWidgets(2));
+      expect(
+        find.textContaining('No snapshots yet'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'plain-JSON tile leads with the unencrypted consequence dialog',
+        (tester) async {
+      await tester.pumpWidget(_wrap(store: InMemorySecureKeyStore()));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Export as plain JSON'));
+      await tester.tap(find.text('Export as plain JSON'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Export unencrypted copy?'), findsOneWidget);
+      // The consequence copy names WeatherGlass and says NOT encrypted.
+      expect(find.textContaining('NOT encrypted'), findsOneWidget);
+      expect(find.textContaining('WeatherGlass'), findsOneWidget);
     });
 
     testWidgets('no overflow at 320 dp x 3.0 text scale', (tester) async {

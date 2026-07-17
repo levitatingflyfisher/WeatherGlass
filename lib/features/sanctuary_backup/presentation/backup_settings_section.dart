@@ -88,6 +88,29 @@ class GlassBackupSection extends ConsumerWidget {
                 onTap: () => const BackupFlow().runRestore(context, ref),
               ),
 
+              // The snapshot vault (always available: restores and exports
+              // populate it regardless of auth state).
+              ListTile(
+                leading: Icon(LucideIcons.history, color: cs.primary),
+                title: const Text('Previous backups'),
+                subtitle: const Text(
+                    'Snapshots kept on this device — restore or pin them'),
+                enabled: !isLoading,
+                onTap: () => showBackupVaultSheet(context),
+              ),
+
+              // Plaintext export (needs no key: sovereignty means you can
+              // READ your data, not just recover it).
+              ListTile(
+                leading: Icon(LucideIcons.fileJson, color: cs.primary),
+                title: const Text('Export as plain JSON'),
+                subtitle:
+                    const Text('Unencrypted — readable by any program'),
+                enabled: !isLoading,
+                onTap: () =>
+                    const BackupFlow().runPlaintextExport(context, ref),
+              ),
+
               // Reset identity (danger zone, only if key exists).
               if (hasKey)
                 ListTile(

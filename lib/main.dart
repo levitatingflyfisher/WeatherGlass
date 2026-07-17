@@ -36,11 +36,28 @@ void main() async {
   );
 }
 
-class GlassApp extends ConsumerWidget {
+class GlassApp extends ConsumerStatefulWidget {
   const GlassApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GlassApp> createState() => _GlassAppState();
+}
+
+class _GlassAppState extends ConsumerState<GlassApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Silent backup freshness net (BACKUP_RETENTION_SPEC §3): if a key
+    // exists and the newest vault snapshot is >7 days old, take one.
+    // Post-frame + fire-and-forget — never blocks boot, never surfaces
+    // errors (runStartupMaintenance swallows everything, incl. no-key).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(backupControllerProvider.notifier).runStartupMaintenance();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(settingsProvider).themeMode;
     return MaterialApp.router(

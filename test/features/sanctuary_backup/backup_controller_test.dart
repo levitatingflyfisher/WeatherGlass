@@ -49,6 +49,10 @@ void main() {
       backupSerializerProvider
           .overrideWith((ref) => GlassBackupSerializer(database, prefs)),
       sanctuaryBackupConfigProvider.overrideWithValue(glassBackupConfig),
+      // v0.2.0 takes a MANDATORY pre-restore snapshot; without an in-memory
+      // vault the default FileVaultStore (path_provider) fails in tests and
+      // every restore fail-closes as RestoreOutcome.snapshotFailed.
+      vaultStoreProvider.overrideWithValue(InMemoryVaultStore()),
     ]);
     addTearDown(c.dispose);
     return c;
@@ -166,6 +170,7 @@ void main() {
       backupSerializerProvider
           .overrideWith((ref) => GlassBackupSerializer(db2, prefs2)),
       sanctuaryBackupConfigProvider.overrideWithValue(glassBackupConfig),
+      vaultStoreProvider.overrideWithValue(InMemoryVaultStore()),
     ]);
     addTearDown(c.dispose);
 

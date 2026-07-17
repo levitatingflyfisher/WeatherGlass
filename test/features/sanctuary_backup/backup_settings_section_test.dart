@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,11 +50,16 @@ Widget _wrap({
 /// out from the file_picker plugin call, which has no platform channel in a
 /// widget test — with WeatherGlass's REAL config (glassBackupConfig) so the
 /// actual restoreReplaceConsequence copy is what's exercised for overflow.
+///
+/// v0.2.0 decrypts and previews BEFORE the confirm dialog, so the blob must
+/// genuinely open under this device's key: the button exports a real
+/// encrypted backup first, then feeds those bytes back into the restore
+/// flow. The mandatory pre-restore snapshot also means the vault must be an
+/// [InMemoryVaultStore].
 Widget _restoreFlowHarness({
   required SecureKeyStore store,
   required double textScale,
 }) {
-  final blob = Uint8List.fromList([1, 2, 3]);
   return ProviderScope(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(store),
@@ -65,6 +68,7 @@ Widget _restoreFlowHarness({
       sanctuaryAppDomainProvider.overrideWithValue('weatherglass'),
       sanctuaryBackupConfigProvider.overrideWithValue(glassBackupConfig),
       backupSerializerProvider.overrideWithValue(FakeBackupSerializer()),
+      vaultStoreProvider.overrideWithValue(InMemoryVaultStore()),
     ],
     child: MaterialApp(
       builder: (context, child) => MediaQuery(
@@ -76,8 +80,14 @@ Widget _restoreFlowHarness({
         body: Builder(
           builder: (context) => Consumer(
             builder: (context, ref, _) => ElevatedButton(
-              onPressed: () =>
-                  const BackupFlow().restorePickedBlob(context, ref, blob),
+              onPressed: () async {
+                final result = await ref
+                    .read(backupControllerProvider.notifier)
+                    .exportBackup();
+                if (!context.mounted || result == null) return;
+                await const BackupFlow()
+                    .restorePickedBlob(context, ref, result.bytes);
+              },
               child: const Text('go'),
             ),
           ),

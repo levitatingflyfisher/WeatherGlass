@@ -27,7 +27,6 @@ dependencies:
   openhearth_design:
     path: ../ohStyle/openhearth_design
   file_picker: ^8.0.0
-  share_plus: ^10.0.0
   sanctuary_auth_core:
     path: ../packages/sanctuary_auth_core
   sanctuary_backup_ui:

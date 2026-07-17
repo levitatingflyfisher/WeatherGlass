@@ -30,6 +30,19 @@ jobs:
           repository: levitatingflyfisher/sanctuaryBackupUi
           path: packages/sanctuary_backup_ui
 
+      # ../ohStyle/openhearth_design (design tokens) and
+      # ../packages/oh_fleet_conformance (the fleet-standards test dev dep)
+      # are path deps too — pub get fails without them.
+      - uses: actions/checkout@v4
+        with:
+          repository: levitatingflyfisher/ohStyle
+          path: ohStyle
+
+      - uses: actions/checkout@v4
+        with:
+          repository: levitatingflyfisher/ohFleetConformance
+          path: packages/oh_fleet_conformance
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -75,6 +88,16 @@ jobs:
         with:
           repository: levitatingflyfisher/sanctuaryBackupUi
           path: packages/sanctuary_backup_ui
+
+      - uses: actions/checkout@v4
+        with:
+          repository: levitatingflyfisher/ohStyle
+          path: ohStyle
+
+      - uses: actions/checkout@v4
+        with:
+          repository: levitatingflyfisher/ohFleetConformance
+          path: packages/oh_fleet_conformance
 
       - uses: actions/setup-java@v4
         with:

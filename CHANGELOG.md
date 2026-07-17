@@ -26,3 +26,7 @@ All notable changes to WeatherGlass will be documented in this file.
 
 ### Changed
 - Backup/restore now rides `sanctuary_backup_ui` 0.2.0.
+- The Material-scale Lora/Nunito text ladder now comes from the shared
+  `openhearth_design` package (`OhTypography.materialTextTheme`) instead
+  of a hand-rolled copy — byte-identical by construction, pinned by an
+  identity test and the golden suite. Zero visual change.

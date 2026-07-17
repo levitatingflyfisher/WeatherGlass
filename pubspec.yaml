@@ -24,6 +24,8 @@ dependencies:
   http: ^1.2.0
   geolocator: ^13.0.1
   lucide_flutter: ^1.7.0
+  openhearth_design:
+    path: ../ohStyle/openhearth_design
   file_picker: ^8.0.0
   share_plus: ^10.0.0
   sanctuary_auth_core:

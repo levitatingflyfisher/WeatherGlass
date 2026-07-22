@@ -1,3 +1,6 @@
+// Shared date helpers, kept in sync with the fleet copies of this file
+// (fork-lineage siblings carry the same extension): change here, sync there —
+// the DST-safety guarantees below must not diverge across apps.
 import 'package:intl/intl.dart';
 
 extension DateTimeExt on DateTime {
@@ -10,15 +13,18 @@ extension DateTimeExt on DateTime {
   String toYear() => _yearFmt.format(this);
 
   /// Midnight of this date, dropping the time component — the canonical form
-  /// for date-only keys.
+  /// for the date-only keys the app's day-keyed tables store.
   DateTime get dateOnly => DateTime(year, month, day);
 
   /// The date-only Monday of this date's week (Dart weekday: Mon = 1 … Sun = 7),
-  /// matching the weekly aggregation used across the fleet.
-  DateTime get startOfWeek {
-    final day = dateOnly;
-    return day.subtract(Duration(days: day.weekday - 1));
-  }
+  /// matching the weekly aggregation the app's date logic keys on.
+  ///
+  /// Calendar arithmetic (`DateTime(y, m, d - n)`), never Duration
+  /// subtraction from local midnight: a DST transition between Monday
+  /// midnight and this date's midnight makes a 24h-per-day walk land at
+  /// 23:00 / 01:00 beside the Monday instead of exactly on it — the same
+  /// class of bug [daysBetweenDates] below was rewritten to avoid.
+  DateTime get startOfWeek => DateTime(year, month, day - (weekday - 1));
 }
 
 /// Whole calendar days from [a] to [b], DST-safe. Both dates are reduced to

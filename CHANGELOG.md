@@ -47,6 +47,13 @@ All notable changes to WeatherGlass will be documented in this file.
   of a hand-rolled copy — byte-identical by construction, pinned by an
   identity test and the golden suite. Zero visual change.
 
+### Fixed
+- `startOfWeek` is now DST-safe: it uses calendar arithmetic
+  (`DateTime(y, m, d - n)`) instead of Duration subtraction from local
+  midnight, so a daylight-saving transition inside the week can no longer
+  shift the week's Monday to 23:00/01:00 beside midnight. Synced with the
+  fleet copies of `datetime_ext.dart`.
+
 ### Removed
 - Unused direct `share_plus` dependency (the backup share flow lives in
   `sanctuary_backup_ui`, which declares its own).

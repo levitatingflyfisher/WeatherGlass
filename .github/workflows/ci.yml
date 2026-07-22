@@ -46,8 +46,12 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      # Golden (pixel) tests are tagged and excluded here, matching the
+      # contract declared in dart_test.yaml and the release workflow: font
+      # rasterisation differs across machines, so goldens are for local
+      # visual review only.
       - name: Test
-        run: flutter test
+        run: flutter test --exclude-tags golden
 
   build-apk:
     name: Build debug APK (smoke)

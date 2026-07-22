@@ -85,17 +85,24 @@ class PrivacyScreen extends ConsumerWidget {
             style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
-          for (final p in LocationPrecision.values)
-            RadioListTile<LocationPrecision>(
-              value: p,
-              groupValue: precision,
-              onChanged: (v) =>
-                  ref.read(settingsProvider.notifier).setPrecision(v!),
-              title: Text('${p.name[0].toUpperCase()}${p.name.substring(1)}'
-                  '  ·  ${p.cell}'),
-              subtitle: Text(p.blurb),
-              contentPadding: EdgeInsets.zero,
+          RadioGroup<LocationPrecision>(
+            groupValue: precision,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).setPrecision(v!),
+            child: Column(
+              children: [
+                for (final p in LocationPrecision.values)
+                  RadioListTile<LocationPrecision>(
+                    value: p,
+                    title: Text(
+                        '${p.name[0].toUpperCase()}${p.name.substring(1)}'
+                        '  ·  ${p.cell}'),
+                    subtitle: Text(p.blurb),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+              ],
             ),
+          ),
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),

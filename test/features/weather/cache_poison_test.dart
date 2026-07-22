@@ -17,7 +17,7 @@ void main() {
   final fixture =
       File('test/features/weather/fixtures/forecast_berlin.json').readAsStringSync();
 
-  SavedLocation loc() => SavedLocation(
+  SavedLocation loc() => const SavedLocation(
         id: 'L1',
         label: 'Berlin',
         sublabel: null,

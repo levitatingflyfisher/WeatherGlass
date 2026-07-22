@@ -5,6 +5,10 @@ All notable changes to WeatherGlass will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `assets/fonts/OFL.txt`: the SIL Open Font License 1.1 text with the
+  Lora and Nunito copyright notices (taken from the fonts' own
+  metadata) now ships alongside the bundled faces, as the OFL requires;
+  referenced from the README's Licence section.
 - Snapshot vault ("Previous backups" in Settings → Backup & Restore):
   every encrypted export and every restore leaves a stamped on-device
   snapshot (keep-10, pinnable) you can restore, pin or delete.

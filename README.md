@@ -66,5 +66,8 @@ Full docs are organized on the [Diátaxis](https://diataxis.fr/) model — start
 
 ## Licence
 
-WeatherGlass is free and open-source software. Weather data © Open-Meteo.com,
-licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+WeatherGlass is free and open-source software ([MIT](LICENSE)). Weather data
+© Open-Meteo.com, licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled Lora
+and Nunito font families are licensed separately under the
+[SIL Open Font License 1.1](assets/fonts/OFL.txt).

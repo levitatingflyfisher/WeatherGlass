@@ -1,5 +1,6 @@
 {
   "main_dart_js_gz_max_bytes": 1046864,
-  "apk_arm64_max_bytes": 21524225,
-  "note": "baseline+5%: main.dart.js 997013 bytes gzipped (build/web, 2026-07-12 deploy build); app-arm64-v8a-release.apk 20499261 bytes (build/app/outputs/flutter-apk)"
+  "apk_arm64_max_bytes": 23212125,
+  "note": "baseline+5%: main.dart.js 997013 bytes gzipped (build/web, 2026-07-12 deploy build); app-arm64-v8a-release.apk 20499261 bytes (build/app/outputs/flutter-apk)",
+  "_apk_note": "2026-07-22 deliberate ratchet: fresh 3.38.7 release build = 22106785 bytes (+5%). Old baseline was the 2026-07-12 deploy artifact from an older toolchain; growth is engine+AOT."
 }

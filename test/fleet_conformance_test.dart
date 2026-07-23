@@ -11,4 +11,12 @@ void main() => runFleetConformance(const FleetAppConfig(
         'android.permission.INTERNET',
         'android.permission.ACCESS_COARSE_LOCATION',
       },
+      // C4 v2 — the release MERGED surface: source permissions plus
+      // what plugins and the manifest merge inject. Bites when an APK
+      // build has left a merged manifest under build/ (dev box).
+      mergedAndroidPermissions: {
+        'android.permission.ACCESS_COARSE_LOCATION',
+        'android.permission.INTERNET',
+        'com.openhearth.glass.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION',
+      },
     ));

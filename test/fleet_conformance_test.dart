@@ -5,7 +5,13 @@ void main() => runFleetConformance(const FleetAppConfig(
       // Bundles its own type, so nothing falls back to a web font — a
       // character the bundled families cannot draw is a box on a
       // real phone. C7 sweeps lib/ for any.
-      checks: FleetAppConfig.withBundledFonts,
+      // C8: a bare IconButton.filled/.filledTonal collides with ohStyle's
+      // ambient iconTheme — glyph and fill paint the same color. Use
+      // OhIconButton, which pins the right one.
+      checks: {
+        ...FleetAppConfig.withBundledFonts,
+        FleetCheck.c8IconButtons,
+      },
       styleTier: StyleTier.tokens,
       // The coordinate-rounding privacy app needs exactly these two:
       // INTERNET for the keyless Open-Meteo fetch, COARSE location so the

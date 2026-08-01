@@ -1,0 +1,13 @@
+Read the sky, tell no one.
+
+WeatherGlass rounds your coordinates BEFORE they leave the device, uses one open keyless weather source (Open-Meteo), and shows you the exact request it made so you can check the claim yourself.
+
+• Current conditions, hourly and daily forecast
+• Coordinates rounded before the request — a tested invariant, not a promise
+• A "What leaves your device" screen that spells out every byte
+• No API key, no account, no ad network, no analytics
+
+The one network call this app makes is the forecast, and you can read it.
+
+Free and open source, MIT licensed.
+Source: https://github.com/levitatingflyfisher/WeatherGlass

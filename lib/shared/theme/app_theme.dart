@@ -5,13 +5,12 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // The Material-scale Lora/Nunito ladder now comes from openhearth_design's
-  // OhTypography.materialTextTheme — byte-identical to the const block this
-  // app hand-rolled before (pinned by material_text_theme_identity_test.dart
-  // and the goldens). Fonts stay BUNDLED (assets/fonts/, declared in pubspec)
-  // and are referenced by family — not fetched from fonts.gstatic.com at
-  // runtime. This keeps the app fully local-first: no font egress on first
-  // launch. See also app_text_styles.dart.
+  // The Material-scale Lora/Nunito ladder comes from openhearth_design's
+  // OhTypography.materialTextTheme, unmodified (pinned by
+  // material_text_theme_identity_test.dart). The faces are BUNDLED as
+  // openhearth_design package fonts and referenced by family — never fetched
+  // from fonts.gstatic.com at runtime. This keeps the app fully local-first:
+  // no font egress on first launch.
   static const TextTheme _textTheme = OhTypography.materialTextTheme;
 
   static final light = ThemeData(

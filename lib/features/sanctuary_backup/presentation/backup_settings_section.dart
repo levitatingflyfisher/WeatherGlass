@@ -3,20 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:sanctuary_auth_core/sanctuary_auth_core.dart';
 import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
+import 'package:glass/shared/widgets/section_label.dart';
 
-/// WeatherGlass-native "Backup & Restore" settings section.
+/// WeatherGlass-native backup settings section.
 ///
-/// The package ships a ready-made [BackupSettingsSection], but it draws its
-/// own `Divider` + "Encrypted Backup" header and bare `ListTile`s, which
-/// clashes with WeatherGlass's `_Label` (uppercase caption) + `Card` +
-/// `ListTile` convention used by every other settings section (see
-/// "Privacy & data" in settings_screen.dart). This widget reproduces the
-/// same tile set with WeatherGlass's own presentation, delegating every bit
-/// of state/crypto/orchestration logic to [BackupFlow] (seed setup / export /
-/// restore / reset) and [backupControllerProvider] — no auth/crypto state
-/// machine, and no copy of the ~130-line restore orchestration, is
-/// reinvented (SANCTUARY-BRIEF §4.W2; W4 finding: adopt `BackupFlow` instead
-/// of a hand-copied flow).
+/// The package ships a ready-made [BackupSettingsSection] (Divider + bare
+/// Material `ListTile`s); WeatherGlass draws the same tile set in its own
+/// [SectionLabel] + `Card` + Lucide-icon style, delegating every bit of
+/// state/crypto/orchestration logic to [BackupFlow] (seed setup / show words
+/// / export / restore / remove words) and [backupControllerProvider] — no
+/// auth/crypto state machine, and no copy of the restore orchestration, is
+/// reinvented (SANCTUARY-BRIEF §4.W2). Its tiles and wording track the
+/// package's (sanctuary_backup_ui 0.3.0); compare them when the package moves.
+///
+/// The heading is drawn here, in every state, so it can never outlive its
+/// tiles: loading shows a status line, and a failed read says so with Try
+/// again (audit humane-interface-08 and seven more lenses: Settings used to
+/// print the heading while this returned `SizedBox.shrink()`).
 class GlassBackupSection extends ConsumerWidget {
   const GlassBackupSection({super.key});
 
@@ -27,14 +30,51 @@ class GlassBackupSection extends ConsumerWidget {
     final backupState = ref.watch(backupControllerProvider);
     final isLoading = backupState is AsyncLoading;
 
+    Widget withHeading(Widget body) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SectionLabel('Backup'),
+            const SizedBox(height: 4),
+            body,
+          ],
+        );
+
     return authAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (e, _) => const SizedBox.shrink(),
+      loading: () => withHeading(const Card(
+        child: ListTile(
+          leading: SizedBox.square(
+            dimension: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          title: Text('Checking backup status…'),
+        ),
+      )),
+      error: (e, _) => withHeading(Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              leading: Icon(LucideIcons.circleAlert, color: cs.error),
+              title: const Text(
+                  "Couldn’t read your backup settings on this device."),
+              subtitle: const Text('Your places and settings are not '
+                  'affected.'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: OutlinedButton(
+                onPressed: () => ref.invalidate(authNotifierProvider),
+                child: const Text('Try again'),
+              ),
+            ),
+          ],
+        ),
+      )),
       data: (authState) {
         final hasKey = authState.masterEncryptionKey != null;
         final seedAcked = authState.seedAcknowledged;
 
-        return Card(
+        return withHeading(Card(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -64,6 +104,19 @@ class GlassBackupSection extends ConsumerWidget {
                       const BackupFlow().confirmPhraseReEntry(context, ref),
                 ),
 
+              // The words stored on this device, shown again behind a
+              // confirm: a mistranscribed paper copy otherwise loops forever
+              // at the re-entry check.
+              if (hasKey)
+                ListTile(
+                  leading: Icon(LucideIcons.eye, color: cs.primary),
+                  title: const Text('Show my recovery words'),
+                  subtitle: const Text('To check or replace your paper copy'),
+                  enabled: !isLoading,
+                  onTap: () =>
+                      const BackupFlow().showRecoveryWords(context, ref),
+                ),
+
               // Export (available after seed acknowledged).
               if (hasKey && seedAcked)
                 ListTile(
@@ -82,8 +135,8 @@ class GlassBackupSection extends ConsumerWidget {
               ListTile(
                 leading: Icon(LucideIcons.download, color: cs.primary),
                 title: const Text('Restore from backup'),
-                subtitle: const Text(
-                    'Load places and settings from an .ohbk file'),
+                subtitle:
+                    const Text('Load places and settings from a backup file'),
                 enabled: !isLoading,
                 onTap: () => const BackupFlow().runRestore(context, ref),
               ),
@@ -94,7 +147,7 @@ class GlassBackupSection extends ConsumerWidget {
                 leading: Icon(LucideIcons.history, color: cs.primary),
                 title: const Text('Previous backups'),
                 subtitle: const Text(
-                    'Snapshots kept on this device — restore or pin them'),
+                    'Snapshots kept on this device. Restore or pin them.'),
                 enabled: !isLoading,
                 onTap: () => showBackupVaultSheet(context),
               ),
@@ -104,19 +157,20 @@ class GlassBackupSection extends ConsumerWidget {
               ListTile(
                 leading: Icon(LucideIcons.fileJson, color: cs.primary),
                 title: const Text('Export as plain JSON'),
-                subtitle:
-                    const Text('Unencrypted — readable by any program'),
+                subtitle: const Text('Unencrypted, so any program can read it'),
                 enabled: !isLoading,
                 onTap: () =>
                     const BackupFlow().runPlaintextExport(context, ref),
               ),
 
-              // Reset identity (danger zone, only if key exists).
+              // Remove recovery words (danger zone, only if key exists).
               if (hasKey)
                 ListTile(
                   leading: Icon(LucideIcons.trash2, color: cs.error),
-                  title: Text('Reset identity', style: TextStyle(color: cs.error)),
-                  subtitle: const Text('Wipes recovery words (keeps your data)'),
+                  title: Text('Remove recovery words',
+                      style: TextStyle(color: cs.error)),
+                  subtitle:
+                      const Text('From this device only. Your data stays.'),
                   enabled: !isLoading,
                   onTap: () =>
                       const BackupFlow().runResetIdentity(context, ref),
@@ -129,7 +183,7 @@ class GlassBackupSection extends ConsumerWidget {
                 ),
             ],
           ),
-        );
+        ));
       },
     );
   }

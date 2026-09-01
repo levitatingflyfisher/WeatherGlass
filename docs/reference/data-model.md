@@ -32,14 +32,21 @@ at the storage boundary.
 | `payload` | text | the **raw** Open-Meteo JSON, cached verbatim |
 | `fetchedAt` | int | epoch ms; freshness compared against the 30-min TTL |
 
-Removing a location deletes its cache row; re-resolving "My location" invalidates its
-cache. A row that fails to parse is evicted and refetched (self-heal).
+Removing a location deletes its cache row (Undo puts it back); re-resolving "My
+location" invalidates its cache. A row that fails to parse is evicted and refetched
+(self-heal). When a fetch fails, a readable row under 7 days old is served instead,
+marked stale, and the forecast shows its age ("Couldn’t reach Open-Meteo. Showing the
+forecast from 3 hours ago.") with Try again; every forecast shows a quiet "Updated …"
+time from `fetchedAt`.
 
 ## Settings (SharedPreferences, not Drift)
 
 [`features/settings/domain/settings.dart`](../../lib/features/settings/domain/settings.dart) —
-`GlassSettings { units, precision, themeMode }`. Defaults: `metric`, `balanced`
-(~1 km), `system`. None of these alter the request shape.
+`GlassSettings { units, precision, theme }`. Defaults: `metric`, `balanced`
+(~1 km), follow the phone. `theme` is openhearth_design's `OhThemeModePreference`,
+stored under the key `themeMode` as `system` / `light` / `dark` (the same strings the
+app stored as a `ThemeMode` name before, so old installs and backups read unchanged).
+None of these alter the request shape.
 
 ## In-memory domain types
 

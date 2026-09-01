@@ -141,6 +141,7 @@ The invariant, precisely:
 | I2a/I2b | `open_meteo_client_test.dart` → "carries EXACTLY the fixed params" / "only those vary" | Exact key set; coordinate-only variation |
 | I2c | `open_meteo_client_test.dart` → "no key / token / cache-buster of any known shape" | The banned-key list; no userInfo/fragment |
 | endpoint | `open_meteo_client_test.dart` | Scheme `https`, keyless host + path for forecast and geocoding |
+| the screen tells the truth | `privacy_screen_test.dart` | The URL shown on "What leaves your device" equals the URL the send path requests (re-rounded to the current precision, even for a row finer than the setting); the geocoder request is shown too; the precision captions are asserted verbatim |
 
 These pass in the current tree (`flutter test test/features/weather/`). The comment
 atop `open_meteo_client_test.dart` states the contract in one line: *"If anyone ever
@@ -169,6 +170,8 @@ what a forecast request contains. It does not, and cannot, cover:
   ([privacy-model.md](../privacy-model.md), [ADR-0004](../adr/0004-no-backend-direct-request.md)).
 - **Search text.** A place *name* typed into search is sent verbatim to the geocoder —
   inherent to a name lookup, and separate from the per-location forecast fingerprint.
+  The in-app screen shows this request live, under its own heading, beside the
+  forecast request.
 - **The constellation.** The *set* of coarse cells one IP requests over time is still
   loosely correlatable; rounding + caching shrink it, they do not erase it.
 - **Transport-layer identity.** TLS fingerprints (JA3/JA4) and the User-Agent are not

@@ -1,5 +1,6 @@
 // lib/features/settings/domain/settings.dart
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:glass/features/weather/domain/geo.dart';
 import 'package:glass/features/weather/domain/units.dart';
 
@@ -19,32 +20,32 @@ class GlassSettings {
   const GlassSettings({
     required this.units,
     required this.precision,
-    required this.themeMode,
+    required this.theme,
   });
 
   final UnitSystem units;
   final LocationPrecision precision;
-  final ThemeMode themeMode;
+  /// Light, dark, or follow the phone (the fleet default). Stored as its
+  /// [OhThemeModePreference.storageValue], which is the same string the app
+  /// stored as a ThemeMode name before, so nothing needs migrating.
+  final OhThemeModePreference theme;
+
+  ThemeMode get themeMode => theme.themeMode;
 
   static const initial = GlassSettings(
     units: UnitSystem.metric,
     precision: LocationPrecision.balanced,
-    themeMode: ThemeMode.system,
+    theme: OhThemeModePreference.defaultValue,
   );
 
   GlassSettings copyWith({
     UnitSystem? units,
     LocationPrecision? precision,
-    ThemeMode? themeMode,
+    OhThemeModePreference? theme,
   }) =>
       GlassSettings(
         units: units ?? this.units,
         precision: precision ?? this.precision,
-        themeMode: themeMode ?? this.themeMode,
+        theme: theme ?? this.theme,
       );
 }
-
-ThemeMode themeModeFromName(String? name) => ThemeMode.values.firstWhere(
-      (m) => m.name == name,
-      orElse: () => ThemeMode.system,
-    );

@@ -3,11 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:glass/shared/theme/app_theme.dart';
 import 'package:openhearth_design/openhearth_design.dart';
 
-/// Tier-T law: adopting `OhTypography.materialTextTheme` must be a ZERO
-/// visual change. This test pins byte-identity between the package ladder and
-/// what WeatherGlass's themes actually resolve — every role's family, size,
-/// and weight. It passed against the hand-rolled const block BEFORE the swap
-/// (proving the package const is byte-identical) and must keep passing after.
+/// Tier-T law: WeatherGlass takes its type ladder from
+/// `OhTypography.materialTextTheme` unmodified. This test pins identity
+/// between the package ladder and what WeatherGlass's themes actually resolve
+/// — every role's family, size, and weight — so a local override cannot drift
+/// the app off the fleet ladder. (openhearth_design 0.7.0 moved the ladder
+/// itself: body 14→16, labels 11/12→13. Glass follows it.)
 void main() {
   const roles = <String, TextStyle? Function(TextTheme)>{
     'displayLarge': _dl, 'displayMedium': _dm, 'displaySmall': _ds,

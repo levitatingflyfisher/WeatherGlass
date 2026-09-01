@@ -20,23 +20,31 @@ chose, and a restored cache could already be stale the moment it lands.
 
 ## Setting up
 
-1. Open **Settings → Backup & Restore → Set up encrypted backup**.
-2. Write down the 12 recovery words on paper. **They are the only way to
-   recover your data on a new device — WeatherGlass holds no copy, and there
-   is no "forgot my words" recovery.**
-3. Re-enter the 12 words to confirm you copied them correctly. This turns "I
-   clicked OK" into a cryptographic proof the paper copy is right.
+1. Open **Settings → Backup → Set up encrypted backup**.
+2. Write down the 12 recovery words on paper, then tap **I've written this
+   down**. The words are stored on this device only at that tap; **Not now**
+   stores nothing. **They are the only way to recover your data on a new
+   device — WeatherGlass holds no copy, and there is no "forgot my words"
+   recovery.**
+3. Re-enter the 12 words, one at a time, to confirm you copied them
+   correctly. This turns "I clicked OK" into a cryptographic proof the paper
+   copy is right.
+
+Until setup is finished, the top of Settings carries a one-line reminder with
+**Set up** and **Dismiss** (a dismissal lasts 30 days). **Show my recovery
+words** shows the stored words again, behind a confirm, if you need to check
+or replace the paper copy.
 
 ## Exporting
 
-**Settings → Backup & Restore → Export backup** encrypts everything above
+**Settings → Backup → Export backup** encrypts everything above
 into a `.ohbk` file and hands it to your device's share sheet — save it to a
 file, email it to yourself, put it on a USB stick, whatever you trust. Nothing
 is uploaded anywhere by WeatherGlass itself.
 
 ## Restoring
 
-**Settings → Backup & Restore → Restore from backup**, then pick a `.ohbk`
+**Settings → Backup → Restore from backup**, then pick a `.ohbk`
 file. Restoring is **destructive**: it replaces every saved place and every
 setting on this device with what's in the file. You'll see a confirmation
 dialog stating that plainly before anything happens — there is no partial or

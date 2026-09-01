@@ -15,6 +15,14 @@ part 'core_providers.g.dart';
 final sharedPreferencesProvider =
     Provider<SharedPreferences>((ref) => throw UnimplementedError());
 
+/// The wall clock, injectable so "Updated 12 minutes ago" is testable.
+final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
+/// Place ids whose next forecast load should skip the fresh cache (a pull to
+/// refresh or Try again). The forecast provider takes the id out as it
+/// loads, so one refresh is exactly one fetch attempt.
+final forceRefreshProvider = Provider<Set<String>>((ref) => <String>{});
+
 /// Set by the Places overview to ask Home to jump to a city (then Home clears
 /// it). Lets the list double as a switcher without coupling the two screens.
 final selectedCityIdProvider = StateProvider<String?>((ref) => null);
@@ -74,7 +82,8 @@ Future<Forecast> forecast(Ref ref, String locationId) async {
     }
   }
   if (loc == null) throw WeatherException('That place is no longer saved.');
+  final force = ref.read(forceRefreshProvider).remove(locationId);
   return ref
       .watch(weatherRepositoryProvider)
-      .getForecast(loc, precision: precision);
+      .getForecast(loc, precision: precision, force: force);
 }

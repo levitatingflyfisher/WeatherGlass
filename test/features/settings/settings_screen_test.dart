@@ -40,6 +40,8 @@ Future<Widget> _makeScreen({
         ),
       ),
       backupSerializerProvider.overrideWithValue(FakeBackupSerializer()),
+      backupReminderStoreProvider
+          .overrideWithValue(InMemoryBackupReminderStore()),
     ],
     child: MaterialApp(
       builder: (context, child) => MediaQuery(
@@ -59,16 +61,34 @@ void main() {
       await tester.pumpWidget(await _makeScreen(store: InMemorySecureKeyStore()));
       await tester.pumpAndSettle();
 
-      expect(find.text('BACKUP & RESTORE'), findsOneWidget);
       expect(find.text('Set up encrypted backup'), findsOneWidget);
       expect(find.text('Restore from backup'), findsOneWidget);
+      // One heading, drawn by the section itself.
+      expect(find.text('Backup'), findsOneWidget);
+      // Unfinished setup is noticed at the top of Settings (ruling 48).
+      expect(find.textContaining("Backup isn't set up"), findsOneWidget);
       // The other settings sections are unaffected — PRIVACY & DATA is
       // above the fold; ABOUT needs a scroll now that Backup & Restore adds
       // height between them, so scroll to confirm it's still reachable
       // rather than accidentally pushed off the ListView entirely.
-      expect(find.text('PRIVACY & DATA'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('ABOUT'), 300);
-      expect(find.text('ABOUT'), findsOneWidget);
+      expect(find.text('Privacy & data'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('About'), 300);
+      expect(find.text('About'), findsOneWidget);
+    });
+
+    // audit mind-in-mind-10, visual-display-15: tracked capitals read
+    // slower and lose word shape; mind-in-mind-09: headings had no header
+    // semantics. Section labels are sentence case and announced as headings.
+    testWidgets('section labels are sentence case headings', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(await _makeScreen(store: InMemorySecureKeyStore()));
+      await tester.pumpAndSettle();
+      expect(find.text('UNITS'), findsNothing);
+      expect(find.text('Units'), findsOneWidget);
+      expect(
+          tester.getSemantics(find.text('Units')),
+          matchesSemantics(label: 'Units', isHeader: true));
+      handle.dispose();
     });
 
     testWidgets('shows export once the seed is acknowledged', (tester) async {
@@ -79,7 +99,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Export backup'), findsOneWidget);
-      expect(find.text('Reset identity'), findsOneWidget);
+      expect(find.text('Remove recovery words'), findsOneWidget);
+      // Setup is finished, so no reminder.
+      expect(find.text('Set up'), findsNothing);
     });
 
     testWidgets('no overflow at 320dp x textScale 3.0 (ghost state)',

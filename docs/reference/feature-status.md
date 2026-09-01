@@ -18,11 +18,13 @@ ceiling, see [privacy-model.md](../privacy-model.md); for the deliberate boundar
 | Multiple saved places + reorder | ✅ | `data/locations_repository.dart`, `presentation/*` |
 | "Use my location" (low-accuracy, rounded) | ✅ | `data/geolocation_service.dart` |
 | 30-min forecast cache + self-heal eviction | ✅ tested | `data/weather_repository.dart` |
+| Offline: last good forecast shown with its age ("as of"), not an error | ✅ tested | `data/weather_repository.dart`, `test/features/weather/stale_cache_test.dart` |
 | Units (metric/imperial, client-side convert) | ✅ tested | `domain/units.dart` |
 | "What leaves your device" transparency screen | ✅ | `presentation/privacy_screen.dart` |
 | Encrypted backup/restore (saved places + settings, `.ohbk`) | ✅ tested | `features/sanctuary_backup/`, [how-to](../how-to/encrypted-backup.md) |
-| Bundled fonts, no third-party egress | ✅ regression-tested | `pubspec.yaml`, `test/shared/theme/offline_fonts_test.dart` |
-| Light/dark theme | ✅ | `settings_controller.dart` |
+| Bundled fonts, no third-party egress | ✅ regression-tested | openhearth_design package fonts, `test/shared/theme/offline_fonts_test.dart` |
+| Light / dark / follow-phone theme, one tap from Home | ✅ tested | `settings_controller.dart`, `test/features/settings/theme_preference_test.dart` |
+| Wide screens: content capped at 640 dp, sky full-bleed | ✅ tested | `OhPage`, `test/features/page_width_and_theme_test.dart` |
 | PWA (offline, persisted storage) | ✅ shipped | `web/` |
 | Sideload APK | ✅ shipped | `v0-apk` release |
 

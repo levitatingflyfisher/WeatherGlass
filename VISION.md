@@ -90,11 +90,16 @@ before you rely on it. As of v0.1.0:
   `geo_test.dart` and `open_meteo_client_test.dart` enforce it and pass.
 - The weather core: Open-Meteo client (forecast + geocoding), the parallel-array JSON
   parse, WMO-code → condition mapping, metric-request-then-convert units, and the
-  30-minute cache with self-healing eviction of a poisoned row — all tested.
+  30-minute cache with self-healing eviction of a poisoned row — all tested. Offline,
+  the last good forecast (up to 7 days old) stays on screen with its age and Try
+  again, instead of an error page.
 - The signature: `skyFor` — a pure, deterministic living-sky palette from condition +
   day/night — tested, and swept with golden images.
-- The transparency screen shows the *real* request URL for a saved place, the
-  never-sent list, and the honest IP caveat.
+- The transparency screen shows the *real* request URL for a saved place, built the
+  way the send path builds it (`privacy_screen_test.dart` pins displayed == sent), the
+  geocoder request beside it, the never-sent list, and the honest IP caveat. Its
+  precision caption says what the setting really does: coarser re-rounds every saved
+  place now and cannot be undone, and the options say so before the tap.
 - Ships as a PWA (offline-capable, persisted storage) and a sideload APK.
 
 **Aspirational — documented, or deliberately out of scope:**

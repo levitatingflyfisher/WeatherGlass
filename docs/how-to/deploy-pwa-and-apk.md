@@ -21,7 +21,10 @@ flutter build web --base-href "/WeatherGlass/"
   landing card on the OpenHearth GitHub Pages site.
 
 Verify after deploy: open the live URL, add a place, confirm the forecast renders and
-**Settings → What leaves your device** shows the real URL.
+**Settings → What leaves your device** shows the real URL. Then look at **Settings**
+itself: the **Backup** section must show its tiles (or "Checking backup status…" /
+a Try again message), never a heading over nothing. The audit found that gap on the
+deployed PWA, and nothing in this list would have caught it.
 
 ## APK → sideload release
 

@@ -11,6 +11,24 @@ void main() => runFleetConformance(const FleetAppConfig(
       checks: {
         ...FleetAppConfig.withBundledFonts,
         FleetCheck.c8IconButtons,
+        // C10: no raw exception text on screen — errors go through
+        // OhErrorState / ohFriendlyErrorMessage (openhearth_design 0.7).
+        FleetCheck.c10RawErrors,
+        // C11: a top-bar action carries a name, not only a glyph. Glass's
+        // bars use icon + word (TextButton.icon, OhThemeToggle).
+        FleetCheck.c11IconLabels,
+        // C9: every GoRoute has a way in. C12: the sky-blue accent stays
+        // distinguishable from ohStyle's error red. C5-primaryScreens: the
+        // screens below are swept at 360 dp x 1.3 in
+        // test/a11y/primary_action_sweep_test.dart.
+        FleetCheck.c9Routes,
+        FleetCheck.c12AccentVsError,
+        FleetCheck.c5PrimaryScreens,
+      },
+      primaryActionScreens: {
+        'HomeScreen',
+        'LocationsScreen',
+        'AddLocationSheet',
       },
       styleTier: StyleTier.tokens,
       // The coordinate-rounding privacy app needs exactly these two:

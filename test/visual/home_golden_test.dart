@@ -8,14 +8,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:glass/core/providers/core_providers.dart';
 import 'package:glass/core/storage/app_database.dart';
 import 'package:glass/features/weather/data/models.dart';
+import 'package:glass/shared/theme/app_theme.dart';
 import 'package:glass/features/weather/presentation/home_screen.dart';
 
 import 'visual_golden_helper.dart';
 
-final _theme = ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3D82C9)),
-);
+// The app's real theme, so a change to the shared type ladder or tokens
+// shows up here (the fonts are bundled package fonts, loaded by
+// flutter_test_config.dart — nothing is fetched).
+final _theme = AppTheme.light;
 
 SavedLocation _loc(String id, String label) => SavedLocation(
       id: id,

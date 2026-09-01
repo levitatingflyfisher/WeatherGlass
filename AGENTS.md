@@ -94,8 +94,9 @@ flutter build apk --split-per-abi --release                # APK build
   — a fresh checkout **must** run `build_runner` before `flutter build`, or you get
   "No such file or directory" on `*.g.dart` imports.
 - Repository tests use an in-memory SQLite DB (`AppDatabase(NativeDatabase.memory())`)
-  — no mocking needed. Widget/golden tests live in `test/visual/`; a `CustomPainter`'s
-  `TextPainter` renders as tofu in headless goldens but fine live (see `DECISIONS.md`).
+  — no mocking needed. Widget/golden tests live in `test/visual/` and render with
+  `AppTheme.light`. The hourly graph's `TextPainter` now names the app's font family,
+  so its numerals render in goldens too (they were tofu when it named none).
 - The full decision history and design notes are in [DECISIONS.md](DECISIONS.md);
   the formalized load-bearing choices are in [docs/adr/](docs/adr/).
 

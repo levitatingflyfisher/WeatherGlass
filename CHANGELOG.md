@@ -4,11 +4,39 @@ All notable changes to WeatherGlass will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (fleet-fix rollout, 2026-09)
+- Adopts openhearth_design 0.7.2, sanctuary_backup_ui 0.3.0 and
+  oh_fleet_conformance 0.8.1. The type ladder moved (body 14 → 16), and the
+  goldens now render the app's real theme so such moves are visible.
+- Lora and Nunito come from openhearth_design's package fonts; the app's own
+  copies and `assets/fonts/OFL.txt` are gone (the licence ships with the
+  package's faces).
+- Errors on screen are OhErrorState (plain words, Try again, details behind a
+  tap); offline, the last good forecast is shown with its age instead.
+- Removing a place happens at once with an Undo that never expires (no
+  dialog); the reorder handle moved away from the trash button.
+- Theme is light / dark / follow phone, one tap from Home; the stored
+  `themeMode` strings are unchanged.
+- Wide screens: each screen caps its own content (640 dp; the privacy screen
+  560 dp) and Home's sky stays full-bleed, replacing the 760 px app box.
+- Home's controls read Places and Settings; Places' + reads Add.
+- The Backup section draws its own heading in every state, adds Show my
+  recovery words, stores words only on consent, and a Finish-setup reminder
+  sits at the top of Settings. Web key storage is scoped to this app.
+- Section labels are sentence case headings; the hourly graph follows text
+  size and uses the app's type; all text on the sky reaches 4.5:1.
+- The privacy screen's precision caption is true, the displayed request is
+  built like the sent one, the geocoder request is shown, and coarser
+  precision options warn before the tap.
+- The PWA shell's title, description and boot screen say what the app is.
+
 ### Added
 - `assets/fonts/OFL.txt`: the SIL Open Font License 1.1 text with the
   Lora and Nunito copyright notices (taken from the fonts' own
   metadata) now ships alongside the bundled faces, as the OFL requires;
-  referenced from the README's Licence section.
+  referenced from the README's Licence section. (Superseded by the fleet
+  font migration above: the faces and their licence now ship with
+  openhearth_design.)
 - Snapshot vault ("Previous backups" in Settings → Backup & Restore):
   every encrypted export and every restore leaves a stamped on-device
   snapshot (keep-10, pinnable) you can restore, pin or delete.

@@ -30,6 +30,10 @@ class _AddLocationSheetState extends ConsumerState<AddLocationSheet> {
   bool _locating = false;
   String? _error;
 
+  /// The query that came back empty, so the sheet can say so; cleared as
+  /// soon as the text changes.
+  String? _emptyFor;
+
   @override
   void dispose() {
     _query.dispose();
@@ -42,10 +46,16 @@ class _AddLocationSheetState extends ConsumerState<AddLocationSheet> {
     setState(() {
       _searching = true;
       _error = null;
+      _emptyFor = null;
     });
     try {
       final r = await ref.read(openMeteoProvider).searchPlaces(q);
-      if (mounted) setState(() => _results = r);
+      if (mounted) {
+        setState(() {
+          _results = r;
+          _emptyFor = r.isEmpty ? q : null;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Search failed. Check your connection.');
     } finally {
@@ -103,9 +113,10 @@ class _AddLocationSheetState extends ConsumerState<AddLocationSheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
           16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      // One shrink-wrapped list, not a Column with a nested result list: at
+      // large text the whole sheet scrolls instead of overflowing.
+      child: ListView(
+        shrinkWrap: true,
         children: [
           Text('Add a place', style: t.titleLarge),
           const SizedBox(height: 12),
@@ -114,21 +125,27 @@ class _AddLocationSheetState extends ConsumerState<AddLocationSheet> {
             autofocus: true,
             textInputAction: TextInputAction.search,
             onSubmitted: (_) => _search(),
-            decoration: InputDecoration(
+            onChanged: (_) {
+              if (_emptyFor != null) setState(() => _emptyFor = null);
+            },
+            decoration: const InputDecoration(
               hintText: 'Search a town or city',
-              prefixIcon: const Icon(LucideIcons.search),
-              suffixIcon: _searching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2)))
-                  : IconButton(
-                      icon: const Icon(LucideIcons.cornerDownLeft),
-                      onPressed: _search),
-              border: const OutlineInputBorder(),
+              prefixIcon: Icon(LucideIcons.search),
+              border: OutlineInputBorder(),
             ),
+          ),
+          const SizedBox(height: 8),
+          // A worded button, not a return-key glyph (persona F4,
+          // audit dont-make-me-think-05).
+          FilledButton.icon(
+            onPressed: _searching ? null : _search,
+            icon: _searching
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(LucideIcons.search, size: 18),
+            label: const Text('Search'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -145,22 +162,20 @@ class _AddLocationSheetState extends ConsumerState<AddLocationSheet> {
             const SizedBox(height: 8),
             Text(_error!, style: t.bodySmall?.copyWith(color: cs.error)),
           ],
+          if (_emptyFor != null) ...[
+            const SizedBox(height: 8),
+            Text(
+                'No places found for “$_emptyFor”. Try another spelling or a '
+                'larger town nearby.',
+                style: t.bodyMedium),
+          ],
           const SizedBox(height: 8),
-          if (_results.isNotEmpty)
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _results.length,
-                itemBuilder: (_, i) {
-                  final p = _results[i];
-                  return ListTile(
-                    leading: const Icon(LucideIcons.mapPin),
-                    title: Text(p.name),
-                    subtitle: p.region.isEmpty ? null : Text(p.region),
-                    onTap: () => _addPlace(p),
-                  );
-                },
-              ),
+          for (final p in _results)
+            ListTile(
+              leading: const Icon(LucideIcons.mapPin),
+              title: Text(p.name),
+              subtitle: p.region.isEmpty ? null : Text(p.region),
+              onTap: () => _addPlace(p),
             ),
           const SizedBox(height: 4),
           Row(

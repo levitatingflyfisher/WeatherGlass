@@ -95,10 +95,45 @@ class LocationsRepository {
     return existing.id;
   }
 
-  Future<void> remove(String id) async {
+  /// Remove a place and its cached forecast, returning both so the Places
+  /// screen's Undo can put them back exactly ([restore]).
+  Future<RemovedPlace> remove(String id) async {
+    final cache = await (_db.select(_db.forecastCache)
+          ..where((t) => t.locationId.equals(id)))
+        .getSingleOrNull();
+    final row = await byId(id);
     await (_db.delete(_db.forecastCache)..where((t) => t.locationId.equals(id)))
         .go();
     await (_db.delete(_db.savedLocations)..where((t) => t.id.equals(id))).go();
+    return RemovedPlace(row, cache);
+  }
+
+  /// Undo a [remove]: the row returns with its id and list position, and its
+  /// cached forecast returns too, so Undo costs no network request.
+  ///
+  /// The coordinate is re-rounded to [precision] first, so Undo can never
+  /// bring back a finer coordinate than the setting now allows (and then the
+  /// cached payload, which embeds the old coordinate, is dropped). If a new
+  /// "My location" was resolved in the meantime, the restored one comes back
+  /// as an ordinary place, so there is still exactly one current location.
+  Future<void> restore(RemovedPlace removed,
+      {required LocationPrecision precision}) async {
+    final row = removed.location;
+    if (row == null) return;
+    final (lat, lon) = roundForPrecision(row.lat, row.lon, precision);
+    final hasCurrent = row.isCurrent &&
+        await (_db.select(_db.savedLocations)
+                  ..where((t) => t.isCurrent.equals(true)))
+                .getSingleOrNull() !=
+            null;
+    await _db.transaction(() async {
+      await _db.into(_db.savedLocations).insertOnConflictUpdate(row.copyWith(
+          lat: lat, lon: lon, isCurrent: row.isCurrent && !hasCurrent));
+      final cache = removed.cache;
+      if (cache != null && lat == row.lat && lon == row.lon) {
+        await _db.into(_db.forecastCache).insertOnConflictUpdate(cache);
+      }
+    });
   }
 
   /// Coarsen every saved row to [precision]'s grid, evicting the forecast
@@ -130,4 +165,12 @@ class LocationsRepository {
       }
     });
   }
+}
+
+/// What [LocationsRepository.remove] took: the place row (null if it was
+/// already gone) and its cached forecast, if any.
+class RemovedPlace {
+  const RemovedPlace(this.location, this.cache);
+  final SavedLocation? location;
+  final CachedForecast? cache;
 }

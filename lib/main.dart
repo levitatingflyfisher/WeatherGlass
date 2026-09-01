@@ -24,6 +24,10 @@ void main() async {
         // constraint like Lullaby's (SANCTUARY-BRIEF §2.1, §2.3, §4.W2).
         sanctuaryAppDomainProvider.overrideWithValue('weatherglass'),
         sanctuaryBackupConfigProvider.overrideWithValue(glassBackupConfig),
+        // On web every fleet PWA shares one origin, so one localStorage:
+        // without this the recovery words would be shared with sibling apps
+        // (sanctuary_backup_ui 0.3.0). Does nothing on native.
+        appScopedKeyStoreOverride(),
         backupSerializerProvider.overrideWith(
           (ref) => GlassBackupSerializer(
             ref.watch(appDatabaseProvider),
@@ -65,17 +69,10 @@ class _GlassAppState extends ConsumerState<GlassApp> {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      // Wide screens: each screen caps its own content with OhPage, so the
+      // app bars and Home's sky still reach the window edges (the old 760 px
+      // box around the whole app drew a hard edge on the sky).
       routerConfig: router,
-      // On wide screens keep the single-column app centered at a comfortable
-      // reading width rather than stretching edge-to-edge (phones pass through).
-      builder: (context, child) {
-        final inner = child ?? const SizedBox.shrink();
-        if (MediaQuery.of(context).size.width <= 760) return inner;
-        return ColoredBox(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Center(child: SizedBox(width: 760, child: inner)),
-        );
-      },
     );
   }
 }

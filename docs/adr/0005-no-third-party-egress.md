@@ -15,8 +15,9 @@ of the app is built on. WeatherGlass was initially fetching Lora/Nunito that way
 Permit **no third-party runtime egress**. The only network destination is Open-Meteo
 (ADR-0002, ADR-0004).
 
-- **Bundle fonts.** Lora and Nunito ship as assets in the APK/PWA and are declared in
-  `pubspec.yaml`; nothing is fetched from Google at runtime. (A regression test guards
+- **Bundle fonts.** Lora and Nunito ship as assets in the APK/PWA, declared as package
+  fonts by the shared `openhearth_design` dependency (the app declared its own copies
+  until the 2026-09 fleet font migration); nothing is fetched from Google at runtime. (A regression test guards
   that the Google Fonts path is gone.)
 - **No analytics, telemetry, crash reporting, or ad SDK** — none is added, so there is
   nothing to disable.

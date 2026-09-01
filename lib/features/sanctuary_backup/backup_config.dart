@@ -16,7 +16,7 @@ const glassBackupConfig = SanctuaryBackupConfig(
   restoreReplaceConsequence:
       'Restoring will delete all saved places and settings on this device, '
       'then replace them with the contents of the backup file. Cached '
-      'forecasts are not part of the backup — WeatherGlass fetches them '
+      'forecasts are not part of the backup: WeatherGlass fetches them '
       'again automatically the next time you open a place.',
   onAfterRestore: afterGlassRestore,
 );

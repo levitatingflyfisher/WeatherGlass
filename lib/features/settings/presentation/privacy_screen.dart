@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:glass/core/providers/core_providers.dart';
 import 'package:glass/features/settings/settings_controller.dart';
 import 'package:glass/features/weather/data/open_meteo_client.dart';
@@ -21,98 +22,137 @@ class PrivacyScreen extends ConsumerWidget {
     final precision = ref.watch(settingsProvider).precision;
     final locations = ref.watch(savedLocationsProvider).valueOrNull ?? const [];
 
-    // Show the real request for the first saved place, or a worked example.
+    // Show the real request for the first saved place, or a worked example,
+    // built exactly as the send path builds it (weather_repository.dart):
+    // re-rounded to the current precision, so the two cannot drift even if a
+    // stored row were ever finer than the setting.
     final sample = locations.isNotEmpty
         ? (locations.first.lat, locations.first.lon, locations.first.label)
         : (52.52, 13.41, 'an example place');
-    final url = OpenMeteo.forecastUrl(sample.$1, sample.$2).toString();
+    final (lat, lon) = roundForPrecision(sample.$1, sample.$2, precision);
+    final url = OpenMeteo.forecastUrl(lat, lon).toString();
+    final saved = locations.length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('What leaves your device')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'WeatherGlass is local-first. Forecasts come straight from Open-Meteo with '
-            'no account and no go-between. Here is the whole story.',
-            style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 20),
-
-          const _Heading('The exact request', icon: LucideIcons.code),
-          const SizedBox(height: 8),
-          _UrlBox(url: url),
-          const SizedBox(height: 6),
-          Text(
-            'This is the entire request for ${sample.$3}. The only part that '
-            'differs between you and anyone else is the coordinate — and that '
-            'is rounded to a ${precision.cell} cell. There is no key, no token, '
-            'and nothing that ties it to you.',
-            style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-
-          const _Heading('Never sent', icon: LucideIcons.shieldCheck),
-          const _GoodRow('No API key or app token'),
-          const _GoodRow('No cookies'),
-          const _GoodRow('No account, login, or email'),
-          const _GoodRow('No analytics, ads, or trackers'),
-          const _GoodRow('Your places and history stay on this device'),
-          const _GoodRow(
-              'An encrypted backup goes only to the share sheet you choose — '
-              'never to a server of ours'),
-          const SizedBox(height: 24),
-
-          const _Heading('Honestly, what we can’t hide', icon: LucideIcons.eye),
-          const SizedBox(height: 8),
-          Text(
-            'Any direct request shows the provider your device’s IP address — '
-            'that’s how the internet works, and WeatherGlass does not route through a '
-            'server of ours to mask it. What WeatherGlass does instead is reveal as '
-            'little as possible: a coarse, rounded location and aggressive '
-            'caching so it asks rarely. Your set of saved places, seen from one '
-            'IP over time, is still loosely correlatable — rounding and caching '
-            'shrink that, they don’t erase it.',
-            style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-
-          const _Heading('Location precision', icon: LucideIcons.mapPin),
-          const SizedBox(height: 4),
-          Text(
-            'How coarsely your location is rounded before it’s stored or sent. '
-            'Applies to places you add from now on.',
-            style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          RadioGroup<LocationPrecision>(
-            groupValue: precision,
-            onChanged: (v) =>
-                ref.read(settingsProvider.notifier).setPrecision(v!),
-            child: Column(
-              children: [
-                for (final p in LocationPrecision.values)
-                  RadioListTile<LocationPrecision>(
-                    value: p,
-                    title: Text(
-                        '${p.name[0].toUpperCase()}${p.name.substring(1)}'
-                        '  ·  ${p.cell}'),
-                    subtitle: Text(p.blurb),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-              ],
+      // The prose screen gets a narrower column than the 640 dp default, so
+      // its 13 px captions stay near 80 characters a line on a wide window
+      // (audit design-for-hackers-03 measured a 728 px measure).
+      body: OhPage(
+        maxWidth: 560,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          children: [
+            Text(
+              'WeatherGlass is local-first. Forecasts come straight from Open-Meteo with '
+              'no account and no go-between. Here is the whole story.',
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
-          ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          Text(
-            'Weather data by Open-Meteo.com, licensed CC BY 4.0 '
-            '(creativecommons.org/licenses/by/4.0). WeatherGlass is free and '
-            'open-source software.',
-            style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-        ],
+            const SizedBox(height: 20),
+            const _Heading('The exact request', icon: LucideIcons.code),
+            const SizedBox(height: 8),
+            _UrlBox(url: url),
+            const SizedBox(height: 6),
+            Text(
+              // "or coarser": a place saved under a coarser setting stays on
+              // its coarser grid (rounding cannot be undone), and the send
+              // boundary never sends finer than the setting. Both directions
+              // are true of this sentence (audit finding 3).
+              'This is the entire forecast request for ${sample.$3}. The only '
+              'part that differs between you and anyone else is the '
+              'coordinate, rounded to ${precision.cell} or coarser. There is '
+              'no key, no token, and nothing that ties it to you.',
+              style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            // audit design-of-everyday-things-07: the geocoder is the one
+            // request that carries unrounded free text, and the screen that
+            // promises the whole story never mentioned it.
+            const _Heading('The other request, only when you search',
+                icon: LucideIcons.search),
+            const SizedBox(height: 8),
+            _UrlBox(url: OpenMeteo.geocodeUrl('Berlin').toString()),
+            const SizedBox(height: 6),
+            Text(
+              'Searching for a place asks Open-Meteo’s geocoder, as above for '
+              '“Berlin”. The name goes exactly as you type it: it is not '
+              'rounded, and nothing else is attached. Only the place you pick '
+              'is kept, rounded like any other.',
+              style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            const _Heading('Never sent', icon: LucideIcons.shieldCheck),
+            const _GoodRow('No API key or app token'),
+            const _GoodRow('No cookies'),
+            const _GoodRow('No account, login, or email'),
+            const _GoodRow('No analytics, ads, or trackers'),
+            const _GoodRow('Your places and history stay on this device'),
+            const _GoodRow(
+                'An encrypted backup goes only to the share sheet you choose, '
+                'never to a server of ours'),
+            const SizedBox(height: 24),
+            const _Heading('Honestly, what we can’t hide',
+                icon: LucideIcons.eye),
+            const SizedBox(height: 8),
+            Text(
+              'Any direct request shows the provider your device’s IP address; '
+              'that’s how the internet works, and WeatherGlass does not route through a '
+              'server of ours to mask it. What WeatherGlass does instead is reveal as '
+              'little as possible: a coarse, rounded location and aggressive '
+              'caching so it asks rarely. Your set of saved places, seen from one '
+              'IP over time, is still loosely correlatable: rounding and caching '
+              'shrink that, they don’t erase it.',
+              style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            const _Heading('Location precision', icon: LucideIcons.mapPin),
+            const SizedBox(height: 4),
+            Text(
+              'How coarsely your location is rounded before it’s stored or '
+              'sent. A coarser setting re-rounds every saved place now; a '
+              'finer one applies only to places you add afterwards.',
+              style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            RadioGroup<LocationPrecision>(
+              groupValue: precision,
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setPrecision(v!),
+              child: Column(
+                children: [
+                  for (final p in LocationPrecision.values)
+                    RadioListTile<LocationPrecision>(
+                      value: p,
+                      title: Text(
+                          '${p.name[0].toUpperCase()}${p.name.substring(1)}'
+                          ' · ${p.cell}'),
+                      // A coarser choice destroys detail on disk, so it says
+                      // so before the tap, not after (audit
+                      // humane-interface-01, about-face-03).
+                      subtitle: Text(
+                        p.decimals < precision.decimals && saved > 0
+                            ? '${p.blurb} Re-rounds your $saved saved '
+                                'place${saved == 1 ? '' : 's'} now. Choosing '
+                                'a finer setting later won’t bring back the '
+                                'detail.'
+                            : p.blurb,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            Text(
+              'Weather data by Open-Meteo.com, licensed CC BY 4.0 '
+              '(creativecommons.org/licenses/by/4.0). WeatherGlass is free and '
+              'open-source software.',
+              style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

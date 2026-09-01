@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +12,17 @@ import 'package:sanctuary_backup_ui/testing.dart';
 const _validPhrase =
     'abandon abandon abandon abandon abandon abandon abandon abandon '
     'abandon abandon abandon about';
+
+/// A key store whose first read never finishes (auth stays loading) or
+/// throws (auth errors).
+class _StuckStore extends InMemorySecureKeyStore {
+  _StuckStore({this.fail = false});
+  final bool fail;
+  final _never = Completer<String?>();
+  @override
+  Future<String?> readMnemonic() =>
+      fail ? Future.error(StateError('keystore locked')) : _never.future;
+}
 
 Widget _wrap({
   required SecureKeyStore store,
@@ -101,6 +114,35 @@ Widget _restoreFlowHarness({
 }
 
 void main() {
+  // audit weatherglass humane-interface-08 and six more lenses: the heading
+  // was drawn by Settings while this section returned SizedBox.shrink() on
+  // loading and error, so 'Backup & Restore' sat over nothing. The heading
+  // now comes from the same widget as the tiles, in every state.
+  group('GlassBackupSection heading and body come from one widget', () {
+    testWidgets('loading shows the heading with a status line',
+        (tester) async {
+      await tester.pumpWidget(_wrap(store: _StuckStore()));
+      await tester.pump();
+      expect(find.text('Backup'), findsOneWidget);
+      expect(find.text('Checking backup status…'), findsOneWidget);
+    });
+
+    testWidgets('a failed read shows the heading, a sentence and Try again',
+        (tester) async {
+      await tester.pumpWidget(_wrap(store: _StuckStore(fail: true)));
+      await tester.pumpAndSettle();
+      expect(find.text('Backup'), findsOneWidget);
+      expect(find.textContaining('keystore locked'), findsNothing);
+      expect(find.text('Try again'), findsOneWidget);
+    });
+
+    testWidgets('loaded shows the heading once', (tester) async {
+      await tester.pumpWidget(_wrap(store: InMemorySecureKeyStore()));
+      await tester.pumpAndSettle();
+      expect(find.text('Backup'), findsOneWidget);
+    });
+  });
+
   group('GlassBackupSection', () {
     testWidgets('ghost state shows setup + restore, not export',
         (tester) async {
@@ -120,7 +162,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Export backup'), findsOneWidget);
-      expect(find.text('Reset identity'), findsOneWidget);
+      expect(find.text('Remove recovery words'), findsOneWidget);
+      expect(find.text('Show my recovery words'), findsOneWidget);
       expect(find.text('Set up encrypted backup'), findsNothing);
     });
 
@@ -145,7 +188,7 @@ void main() {
 
       expect(find.text('Previous backups'), findsOneWidget);
       expect(find.text('Export as plain JSON'), findsOneWidget);
-      expect(find.text('Unencrypted — readable by any program'),
+      expect(find.text('Unencrypted, so any program can read it'),
           findsOneWidget);
     });
 
@@ -240,13 +283,14 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('Reset identity'));
+      await tester.ensureVisible(find.text('Remove recovery words'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Reset identity'));
+      await tester.tap(find.text('Remove recovery words'));
       await tester.pumpAndSettle();
 
       // The danger-zone confirmation is on screen...
-      expect(find.text('Reset identity?'), findsOneWidget);
+      expect(find.text('Remove recovery words from this device?'),
+          findsOneWidget);
       // ...and its ~45-word body fits without a vertical overflow.
       expect(tester.takeException(), isNull);
     });

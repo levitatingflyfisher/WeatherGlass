@@ -54,7 +54,8 @@ Open-Meteo JSON for a place plus when it was fetched (Drift `ForecastCache`). A 
 copy under the 30-minute TTL is served with no network call — instant, offline-friendly,
 and privacy-minded (fewer requests to correlate). A row that fails to parse (e.g. left
 by an older build, or a valid-JSON-but-empty `200`) is evicted and refetched rather than
-throwing forever. (`data/weather_repository.dart`, `data/locations_repository.dart`)
+throwing forever. When Open-Meteo can't be reached, the last good copy (up to 7 days
+old) is shown with its age and Try again, rather than an error page. (`data/weather_repository.dart`, `data/locations_repository.dart`)
 
 ## The transparency screen
 

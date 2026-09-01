@@ -58,6 +58,6 @@ sync**.
 The domain and data layers — the privacy invariant, parsing, the living-sky palette,
 units, caching — are well covered by unit tests, plus golden images for the forecast
 view. There is no end-to-end integration test that drives a real network fetch through
-the UI; live behavior has been verified manually (see `DECISIONS.md`). Widget goldens
-have a known quirk: a `CustomPainter`'s `TextPainter` renders as tofu headless but fine
-live.
+the UI; live behavior has been verified manually (see `DECISIONS.md`). A
+`CustomPainter`'s `TextPainter` that names no font family renders as tofu in headless
+goldens (the hourly graph names Nunito, so it renders).

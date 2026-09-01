@@ -51,7 +51,7 @@ fonts are bundled in the APK/PWA rather than pulled from Google Fonts
 
 No account, no sign-in, no cloud, no sync. See [data model](reference/data-model.md).
 
-**Encrypted backup doesn't change any of this.** Settings → Backup & Restore
+**Encrypted backup doesn't change any of this.** Settings → Backup
 can export saved places + settings (never the forecast cache — see
 [how-to/encrypted-backup.md](how-to/encrypted-backup.md)) into a locally
 encrypted `.ohbk` file, handed to the OS share sheet. WeatherGlass has no

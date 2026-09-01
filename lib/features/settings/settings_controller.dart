@@ -1,5 +1,5 @@
 // lib/features/settings/settings_controller.dart
-import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:glass/core/providers/core_providers.dart';
 import 'package:glass/features/settings/domain/settings.dart';
@@ -20,7 +20,8 @@ class Settings extends _$Settings {
       units: UnitSystem.fromName(p.getString(SettingsPrefsKeys.units)),
       precision:
           LocationPrecision.fromName(p.getString(SettingsPrefsKeys.precision)),
-      themeMode: themeModeFromName(p.getString(SettingsPrefsKeys.themeMode)),
+      theme: OhThemeModePreference.fromStorage(
+          p.getString(SettingsPrefsKeys.themeMode)),
     );
   }
 
@@ -43,10 +44,10 @@ class Settings extends _$Settings {
     state = state.copyWith(precision: p);
   }
 
-  Future<void> setThemeMode(ThemeMode m) async {
+  Future<void> setTheme(OhThemeModePreference t) async {
     await ref
         .read(sharedPreferencesProvider)
-        .setString(SettingsPrefsKeys.themeMode, m.name);
-    state = state.copyWith(themeMode: m);
+        .setString(SettingsPrefsKeys.themeMode, t.storageValue);
+    state = state.copyWith(theme: t);
   }
 }

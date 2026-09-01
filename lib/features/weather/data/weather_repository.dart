@@ -20,8 +20,16 @@ class WeatherRepository {
             ..where((t) => t.locationId.equals(locationId)))
           .getSingleOrNull();
 
+  /// A cached forecast older than this covers only days already past, so it
+  /// is never served, even offline.
+  static const staleLimit = Duration(days: 7);
+
   /// The freshest forecast for [loc]: a cached copy if it is under [ttl] (unless
-  /// [force]), otherwise a fresh fetch that is then cached.
+  /// [force]), otherwise a fresh fetch that is then cached. If the fetch fails
+  /// and a readable cached copy under [staleLimit] exists, that copy is
+  /// returned marked [Forecast.stale], so the screen can show the weather with
+  /// its age instead of an error; with nothing usable cached the failure
+  /// propagates. Every returned forecast carries [Forecast.fetchedAt].
   Future<Forecast> getForecast(
     SavedLocation loc, {
     required LocationPrecision precision,
@@ -35,36 +43,50 @@ class WeatherRepository {
     // regardless of when (or at what precision) the location was saved.
     final (lat, lon) = roundForPrecision(loc.lat, loc.lon, precision);
     final now = nowMillis ?? DateTime.now().millisecondsSinceEpoch;
-    if (!force) {
-      final row = await _cached(loc.id);
-      if (row != null && now - row.fetchedAt < ttl.inMilliseconds) {
-        try {
-          return Forecast.fromJson(
-              jsonDecode(row.payload) as Map<String, dynamic>);
-        } catch (_) {
-          // A row poisoned by an older build would otherwise re-throw on every
-          // read with no recovery — evict it and fall through to a fresh fetch.
-          await (_db.delete(_db.forecastCache)
-                ..where((t) => t.locationId.equals(loc.id)))
-              .go();
-        }
-      }
+    final row = await _cached(loc.id);
+    if (!force && row != null && now - row.fetchedAt < ttl.inMilliseconds) {
+      final cached = await _readOrEvict(row, loc.id);
+      if (cached != null) return cached;
     }
-    final body = await _client.fetchForecastJson(lat, lon);
-    // Parse BEFORE caching so a valid-JSON-but-unparseable 200 body (e.g. `{}`)
-    // never reaches disk and poisons the cache.
-    final forecast = Forecast.fromJson(jsonDecode(body) as Map<String, dynamic>);
-    await _db.into(_db.forecastCache).insertOnConflictUpdate(
-          ForecastCacheCompanion.insert(
-            locationId: loc.id,
-            payload: body,
-            fetchedAt: now,
-          ),
-        );
-    return forecast;
+    try {
+      final body = await _client.fetchForecastJson(lat, lon);
+      // Parse BEFORE caching so a valid-JSON-but-unparseable 200 body (e.g. `{}`)
+      // never reaches disk and poisons the cache.
+      final forecast =
+          Forecast.fromJson(jsonDecode(body) as Map<String, dynamic>);
+      await _db.into(_db.forecastCache).insertOnConflictUpdate(
+            ForecastCacheCompanion.insert(
+              locationId: loc.id,
+              payload: body,
+              fetchedAt: now,
+            ),
+          );
+      return forecast.withFreshness(
+          fetchedAt: DateTime.fromMillisecondsSinceEpoch(now), stale: false);
+    } catch (_) {
+      // Offline, or a bad response: the last good forecast beats an error.
+      final fallback =
+          row == null || now - row.fetchedAt >= staleLimit.inMilliseconds
+              ? null
+              : await _readOrEvict(row, loc.id);
+      if (fallback == null) rethrow;
+      return fallback.withFreshness(fetchedAt: fallback.fetchedAt, stale: true);
+    }
   }
 
-  /// When the cache was last written for [locationId] (epoch ms), or null.
-  Future<int?> cachedAt(String locationId) async =>
-      (await _cached(locationId))?.fetchedAt;
+  /// Parse a cached row, or evict it if it cannot be parsed: a row poisoned by
+  /// an older build would otherwise re-throw on every read with no recovery.
+  Future<Forecast?> _readOrEvict(CachedForecast row, String locationId) async {
+    try {
+      return Forecast.fromJson(jsonDecode(row.payload) as Map<String, dynamic>)
+          .withFreshness(
+              fetchedAt: DateTime.fromMillisecondsSinceEpoch(row.fetchedAt),
+              stale: false);
+    } catch (_) {
+      await (_db.delete(_db.forecastCache)
+            ..where((t) => t.locationId.equals(locationId)))
+          .go();
+      return null;
+    }
+  }
 }

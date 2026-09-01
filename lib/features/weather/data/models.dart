@@ -104,12 +104,32 @@ class Forecast {
     required this.hourly,
     required this.daily,
     required this.utcOffsetSeconds,
+    this.fetchedAt,
+    this.stale = false,
   });
 
   final CurrentConditions current;
   final List<HourlyPoint> hourly;
   final List<DailyPoint> daily;
   final int utcOffsetSeconds;
+
+  /// When this forecast was fetched from Open-Meteo (null when unknown, e.g.
+  /// a forecast built in a test).
+  final DateTime? fetchedAt;
+
+  /// True when a fresh fetch just failed and this is the cached copy served
+  /// instead, so the screen says how old it is.
+  final bool stale;
+
+  Forecast withFreshness({required DateTime? fetchedAt, required bool stale}) =>
+      Forecast(
+        current: current,
+        hourly: hourly,
+        daily: daily,
+        utcOffsetSeconds: utcOffsetSeconds,
+        fetchedAt: fetchedAt,
+        stale: stale,
+      );
 
   /// Parse Open-Meteo's `/v1/forecast` response (parallel arrays). Times are
   /// the location's local wall clock (we requested `timezone=auto`), so they

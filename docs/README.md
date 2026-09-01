@@ -55,6 +55,7 @@ in `docs/tutorials/`.
 - **[Vision](../VISION.md)** — the one idea, the invariants, the honest scorecard.
 - **[Architecture overview](architecture/OVERVIEW.md)** — the spine + a diagram.
 - **[Architecture Decision Records](adr/)** — why each load-bearing choice was made.
+- **[Personas](explanation/personas.md)**: who agents play when they test the UI, with scenarios.
 - **[Concepts](concepts.md)** — the domain model: rounding & precision, WMO codes,
   the living sky, caching, units.
 - **[Privacy model](privacy-model.md)** — the threat model and exactly what leaves the

@@ -22,6 +22,20 @@ Permit **no third-party runtime egress**. The only network destination is Open-M
 - **No analytics, telemetry, crash reporting, or ad SDK** — none is added, so there is
   nothing to disable.
 - Icons use a bundled icon font (`lucide_flutter`); no remote icon or tile fetch.
+- **Serve the web engine from the app.** A default Flutter web build fetches CanvasKit
+  from `www.gstatic.com` and a Roboto fallback font from `fonts.gstatic.com` on every
+  load, and the PWA did both until 2026-10 despite the bundled fonts above.
+  `web/flutter_bootstrap.js` now points `canvasKitBaseUrl` and `fontFallbackBaseUrl`
+  at the app's own origin: CanvasKit at the build's own copy, fallback fonts at
+  `/fonts/flutter-fallback/`, the fleet's one copy of the engine's Noto fallback
+  set, mirrored by the user site at the same origin (levitatingflyfisher.github.io).
+  Text is drawn from the bundled fonts; a glyph they lack (a typed place name with
+  ř or ł, an emoji) is fetched from that copy on first draw, never from Google.
+  Roboto 404s there by design. The PWA is built with
+  `--no-web-resources-cdn`. Conformance C13 fails if the bootstrap loses that config.
+  The request URLs on "What leaves your device" use `OhTypography.code()`, which is the
+  bundled Nunito on the web: the platform `monospace` they once asked for drew as
+  nothing there once Roboto was gone.
 
 ## Consequences
 

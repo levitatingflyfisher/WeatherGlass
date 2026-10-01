@@ -40,7 +40,8 @@ never alters request #1.
 
 **Nothing else leaves the device.** There is no analytics or telemetry SDK, no crash
 reporter, no ad network, and no third-party asset fetched at runtime — the Lora/Nunito
-fonts are bundled in the APK/PWA rather than pulled from Google Fonts
+fonts are bundled in the APK/PWA rather than pulled from Google Fonts, and the PWA
+serves its own rendering engine (CanvasKit) instead of loading it from Google's CDN
 ([ADR-0005](adr/0005-no-third-party-egress.md)).
 
 ## What stays on the device

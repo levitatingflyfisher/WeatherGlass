@@ -14,6 +14,7 @@ import 'package:glass/features/weather/domain/geo.dart';
 import 'package:glass/shared/theme/app_theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The transparency screen is the app's central claim, so each sentence on
@@ -129,6 +130,36 @@ void main() {
     expect(find.text(OpenMeteo.geocodeUrl('Berlin').toString()),
         findsOneWidget);
     expect(find.textContaining('goes exactly as you type it'), findsOneWidget);
+  });
+
+  testWidgets('the request URLs use the ladder code face', (tester) async {
+    // 'monospace' is a platform family. On the web CanvasKit has none, and
+    // with the CDN Roboto gone (C13) the URL boxes rendered empty in
+    // Chromium. OhTypography.code() is Nunito on the web (ohStyle 0.9.1).
+    await pump(tester, LocationPrecision.balanced);
+    final urls = tester
+        .widgetList<SelectableText>(find.byType(SelectableText))
+        .where((t) => t.data!.startsWith('https://'))
+        .toList();
+    expect(urls, hasLength(2));
+    // code() is inherit: false since ohStyle 0.9.2 (a themed merge used to
+    // prefix 'monospace' into a family nobody has), so it takes no colour
+    // from the theme: the screen must hand it one.
+    final onSurface = Theme.of(tester.element(find.byType(SelectableText).first))
+        .colorScheme
+        .onSurface;
+    for (final t in urls) {
+      expect(t.style,
+          OhTypography.code(color: onSurface).copyWith(fontSize: 11.5),
+          reason: t.data);
+    }
+    for (final e in tester.widgetList<EditableText>(find.byType(EditableText))
+        .where((e) => e.controller.text.startsWith('https://'))) {
+      expect(e.style.fontFamily, 'monospace', reason: 'drawn family');
+      expect(e.style.color, onSurface, reason: 'drawn colour');
+    }
+    expect(OhTypography.code(web: true).fontFamily,
+        'packages/openhearth_design/Nunito');
   });
 
   testWidgets('no overflow at 320 dp x 3.0', (tester) async {

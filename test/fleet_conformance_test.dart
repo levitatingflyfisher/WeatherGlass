@@ -24,6 +24,10 @@ void main() => runFleetConformance(const FleetAppConfig(
         FleetCheck.c9Routes,
         FleetCheck.c12AccentVsError,
         FleetCheck.c5PrimaryScreens,
+        // C13: the PWA loads nothing from Google's CDNs. web/flutter_bootstrap.js
+        // points CanvasKit and the engine's fallback fonts at this origin; the
+        // privacy model's "no third-party asset fetched at runtime" rests on it.
+        FleetCheck.c13WebSelfHosted,
       },
       primaryActionScreens: {
         'HomeScreen',

@@ -194,8 +194,11 @@ class _UrlBox extends StatelessWidget {
         children: [
           SelectableText(
             url,
-            style: const TextStyle(
-                fontFamily: 'monospace', fontSize: 11.5, height: 1.4),
+            // The ladder's code face: platform monospace on Android, the
+            // bundled Nunito on the web, which has no platform fonts. It
+            // inherits nothing from the theme, so it is given its colour.
+            style: OhTypography.code(color: cs.onSurface)
+                .copyWith(fontSize: 11.5),
           ),
           const SizedBox(height: 8),
           Align(

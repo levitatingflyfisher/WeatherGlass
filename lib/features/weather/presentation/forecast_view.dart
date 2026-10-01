@@ -155,7 +155,11 @@ class _Loaded extends ConsumerWidget {
               if (hours.isNotEmpty) ...[
                 _SectionLabel('Next hours', palette: palette),
                 const SizedBox(height: 8),
-                _HourlyGraph(hours: hours, units: units, palette: palette),
+                _HourlyGraph(
+                    hours: hours,
+                    units: units,
+                    palette: palette,
+                    today: days.isNotEmpty ? days.first : null),
                 const SizedBox(height: 24),
               ],
               if (days.isNotEmpty) ...[
@@ -279,29 +283,69 @@ class _DetailChips extends StatelessWidget {
   final UnitSystem units;
   final SkyPalette palette;
 
+  static const _gap = 10.0;
+  static const _pad = 8.0;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _Chip(
-            icon: LucideIcons.wind,
-            label: 'Wind',
-            value: formatWind(current.windKmh, units),
-            palette: palette),
-        const SizedBox(width: 10),
-        _Chip(
-            icon: LucideIcons.droplets,
-            label: 'Humidity',
-            value: '${current.humidity}%',
-            palette: palette),
-        const SizedBox(width: 10),
-        _Chip(
-            icon: LucideIcons.cloudRain,
-            label: 'Rain',
-            value: formatPrecip(current.precipMm, units),
-            palette: palette),
-      ],
-    );
+    final items = [
+      (LucideIcons.wind, 'Wind', formatWind(current.windKmh, units)),
+      (LucideIcons.droplets, 'Humidity', '${current.humidity}%'),
+      (LucideIcons.cloudRain, 'Rain', formatPrecip(current.precipMm, units)),
+    ];
+    final t = Theme.of(context).textTheme;
+    final scaler = MediaQuery.textScalerOf(context);
+    double width(String s, TextStyle? style) {
+      final tp = TextPainter(
+        text: TextSpan(text: s, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final w = tp.width;
+      tp.dispose();
+      return w;
+    }
+
+    final widest = [
+      for (final (_, label, value) in items) ...[
+        width(value, t.titleSmall),
+        width(label, t.labelSmall),
+      ]
+    ].reduce((a, b) => a > b ? a : b);
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final perChip =
+          (constraints.maxWidth - 2 * _gap) / items.length - 2 * _pad;
+      // Three across while every value and name fits whole; otherwise one
+      // chip per line, so large text never shears "12 km/h" or "Humidity".
+      if (widest <= perChip) {
+        return Row(
+          children: [
+            for (final (i, (icon, label, value)) in items.indexed) ...[
+              if (i > 0) const SizedBox(width: _gap),
+              Expanded(
+                child: _Chip(
+                    icon: icon, label: label, value: value, palette: palette),
+              ),
+            ],
+          ],
+        );
+      }
+      return Column(
+        children: [
+          for (final (i, (icon, label, value)) in items.indexed) ...[
+            if (i > 0) const SizedBox(height: _gap),
+            _Chip(
+                icon: icon,
+                label: label,
+                value: value,
+                palette: palette,
+                stacked: true),
+          ],
+        ],
+      );
+    });
   }
 }
 
@@ -310,33 +354,51 @@ class _Chip extends StatelessWidget {
       {required this.icon,
       required this.label,
       required this.value,
-      required this.palette});
+      required this.palette,
+      this.stacked = false});
   final IconData icon;
   final String label;
   final String value;
   final SkyPalette palette;
+
+  /// A full-width line (icon, name, value) instead of a third of the row.
+  final bool stacked;
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: palette.panel,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: palette.dimInk),
-            const SizedBox(height: 6),
-            Text(value,
-                style: t.titleSmall?.copyWith(color: palette.ink),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            Text(label, style: t.labelSmall?.copyWith(color: palette.dimInk)),
-          ],
-        ),
+    final valueText = Text(value,
+        style: t.titleSmall?.copyWith(color: palette.ink),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis);
+    final labelText =
+        Text(label, style: t.labelSmall?.copyWith(color: palette.dimInk));
+    return Container(
+      width: stacked ? double.infinity : null,
+      padding: const EdgeInsets.symmetric(
+          vertical: 12, horizontal: _DetailChips._pad),
+      decoration: BoxDecoration(
+        color: palette.panel,
+        borderRadius: BorderRadius.circular(14),
       ),
+      child: stacked
+          ? Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Icon(icon, size: 18, color: palette.dimInk),
+                labelText,
+                valueText,
+              ],
+            )
+          : Column(
+              children: [
+                Icon(icon, size: 18, color: palette.dimInk),
+                const SizedBox(height: 6),
+                valueText,
+                labelText,
+              ],
+            ),
     );
   }
 }
@@ -344,12 +406,18 @@ class _Chip extends StatelessWidget {
 /// The next-24-hours temperature as a smooth curve (Tufte: the line shows the
 /// trend, the labels give the values) with a soft gradient fill, condition
 /// glyphs, and precipitation as quiet bars — instead of a row of number boxes.
-/// Scrolls horizontally; the curve is scaled to the window's own min/max so the
-/// shape of the day is legible.
+/// Scrolls horizontally. The curve's band is anchored to today's high and
+/// low (drawn as two labelled references), so the same height means the
+/// same temperature across the scroll and a flat day draws flat (audit
+/// Contest 9, ruled).
 class _HourlyGraph extends StatelessWidget {
   const _HourlyGraph(
-      {required this.hours, required this.units, required this.palette});
+      {required this.hours,
+      required this.units,
+      required this.palette,
+      this.today});
   final List<HourlyPoint> hours;
+  final DailyPoint? today;
   final UnitSystem units;
   final SkyPalette palette;
 
@@ -363,7 +431,7 @@ class _HourlyGraph extends StatelessWidget {
     // The canvas has no layout of its own, so it grows by hand: every band
     // and column scales with the reader's text, measured on the 13 px step.
     final k = scaler.scale(13) / 13;
-    return SizedBox(
+    final graph = SizedBox(
       height: _height * k,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -379,9 +447,25 @@ class _HourlyGraph extends StatelessWidget {
             bandScale: k,
             valueStyle: t.labelMedium!,
             labelStyle: t.labelSmall!,
+            dayHighC: today?.highC,
+            dayLowC: today?.lowC,
           ),
         ),
       ),
+    );
+    final day = today;
+    if (day == null) return graph;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Dashed lines: today’s high ${formatTemp(day.highC, units)} '
+          'and low ${formatTemp(day.lowC, units)}',
+          style: t.labelSmall?.copyWith(color: palette.dimInk),
+        ),
+        const SizedBox(height: 4),
+        graph,
+      ],
     );
   }
 }
@@ -400,8 +484,15 @@ class HourlyPainter extends CustomPainter {
     required this.bandScale,
     required this.valueStyle,
     required this.labelStyle,
+    this.dayHighC,
+    this.dayLowC,
   });
   final List<HourlyPoint> hours;
+
+  /// Today's forecast high and low, the band's two anchors. Null (no daily
+  /// row) falls back to the window's own range.
+  final double? dayHighC;
+  final double? dayLowC;
   final UnitSystem units;
   final SkyPalette palette;
   final double hourW;
@@ -429,6 +520,35 @@ class HourlyPainter extends CustomPainter {
   double get _iconY => _iconY0 * bandScale;
   double get _curveTop => _curveTop0 * bandScale;
   double get _curveBottom => _curveBottom0 * bandScale;
+  @visibleForTesting
+  double get curveTop => _curveTop;
+  @visibleForTesting
+  double get curveBottom => _curveBottom;
+
+  (double, double) get _range {
+    if (dayHighC != null && dayLowC != null) return (dayLowC!, dayHighC!);
+    final temps = hours.map((h) => h.temperatureC);
+    return (temps.reduce((a, b) => a < b ? a : b),
+        temps.reduce((a, b) => a > b ? a : b));
+  }
+
+  /// Where a temperature sits: today's high on the band's top, its low on
+  /// the bottom; hours beyond today's range run past the band.
+  @visibleForTesting
+  double yFor(double tC) {
+    final (lo, hi) = _range;
+    final span = (hi - lo).abs() < 0.5 ? 1.0 : hi - lo;
+    return _curveTop + (1 - (tC - lo) / span) * (_curveBottom - _curveTop);
+  }
+
+  /// The two reference labels, when today's range is known.
+  @visibleForTesting
+  List<String> get referenceLabels => dayHighC == null || dayLowC == null
+      ? const []
+      : [
+          'High ${formatTemp(dayHighC!, units)}',
+          'Low ${formatTemp(dayLowC!, units)}',
+        ];
   double get _precipBase => _precipBase0 * bandScale;
   double get _precipMax => _precipMax0 * bandScale;
   double get _labelY => _labelY0 * bandScale;
@@ -439,13 +559,26 @@ class HourlyPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (hours.isEmpty) return;
     final temps = hours.map((h) => h.temperatureC).toList();
-    final lo = temps.reduce((a, b) => a < b ? a : b);
-    final hi = temps.reduce((a, b) => a > b ? a : b);
-    final span = (hi - lo).abs() < 0.5 ? 1.0 : hi - lo;
 
     double x(int i) => i * hourW + hourW / 2;
-    double y(double tC) =>
-        _curveTop + (1 - (tC - lo) / span) * (_curveBottom - _curveTop);
+    // Clamped to the drawable area: an hour far outside today's range
+    // still draws at the edge rather than off the canvas.
+    double y(double tC) => yFor(tC)
+        .clamp(_iconY + 12 * bandScale, _precipBase - 4 * bandScale);
+
+    // Today's high and low: two dashed references across the scroll. Their
+    // words sit in the legend above the graph, where no hour's label can
+    // run into them.
+    if (referenceLabels.isNotEmpty) {
+      final refPaint = Paint()
+        ..color = palette.dimInk.withValues(alpha: 0.6)
+        ..strokeWidth = 1;
+      for (final yy in [_curveTop, _curveBottom]) {
+        for (var dx = 0.0; dx < size.width; dx += 8) {
+          canvas.drawLine(Offset(dx, yy), Offset(dx + 4, yy), refPaint);
+        }
+      }
+    }
 
     final pts = [
       for (var i = 0; i < hours.length; i++) Offset(x(i), y(temps[i]))
@@ -561,6 +694,8 @@ class HourlyPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant HourlyPainter old) =>
       old.hours != hours ||
+      old.dayHighC != dayHighC ||
+      old.dayLowC != dayLowC ||
       old.palette.ink != palette.ink ||
       old.units != units ||
       old.textScaler != textScaler ||

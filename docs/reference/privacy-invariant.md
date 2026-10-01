@@ -141,6 +141,7 @@ The invariant, precisely:
 | I2a/I2b | `open_meteo_client_test.dart` → "carries EXACTLY the fixed params" / "only those vary" | Exact key set; coordinate-only variation |
 | I2c | `open_meteo_client_test.dart` → "no key / token / cache-buster of any known shape" | The banned-key list; no userInfo/fragment |
 | endpoint | `open_meteo_client_test.dart` | Scheme `https`, keyless host + path for forecast and geocoding |
+| the "Never sent" ticks | `never_sent_claims_test.dart` | No cookies (the one client sends no header; no cookie store in lib or pubspec); places stay on this device (only `open_meteo_client.dart` can reach the network, and only the two Open-Meteo hosts appear in lib); the backup has no network path (neither the app's backup feature nor `sanctuary_backup_ui`) |
 | the screen tells the truth | `privacy_screen_test.dart` | The URL shown on "What leaves your device" equals the URL the send path requests (re-rounded to the current precision, even for a row finer than the setting); the geocoder request is shown too; the precision captions are asserted verbatim |
 
 These pass in the current tree (`flutter test test/features/weather/`). The comment

@@ -11,6 +11,9 @@ abstract final class SettingsPrefsKeys {
   static const units = 'units';
   static const precision = 'precision';
   static const themeMode = 'themeMode';
+
+  /// The saved place Home showed last, so a relaunch opens on it.
+  static const lastPlaceId = 'lastPlaceId';
 }
 
 /// The household's preferences. All local; nothing leaves the device, and none

@@ -7,6 +7,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:openhearth_design/openhearth_design.dart';
 import 'package:glass/core/providers/core_providers.dart';
 import 'package:glass/core/storage/app_database.dart';
+import 'package:glass/features/settings/domain/settings.dart';
 import 'package:glass/features/settings/settings_controller.dart';
 import 'package:glass/features/weather/domain/sky.dart';
 import 'package:glass/features/weather/presentation/add_location_sheet.dart';
@@ -22,13 +23,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _page = PageController();
+  // Created with the first list of places, so it can open on the place
+  // looked at last (audit about-face-09) instead of always the first.
+  PageController? _pageCtl;
+  PageController get _page => _pageCtl!;
   int _index = 0;
   double? _overlayHeight;
 
   @override
   void dispose() {
-    _page.dispose();
+    _pageCtl?.dispose();
     super.dispose();
   }
 
@@ -40,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (id == null) return;
       final locs = ref.read(savedLocationsProvider).valueOrNull ?? const [];
       final idx = locs.indexWhere((l) => l.id == id);
-      if (idx >= 0 && _page.hasClients) {
+      if (idx >= 0 && _pageCtl != null && _page.hasClients) {
         _page.animateToPage(idx,
             duration: const Duration(milliseconds: 320),
             curve: Curves.easeOutCubic);
@@ -64,6 +68,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _pages(List<SavedLocation> locations) {
+    if (_pageCtl == null) {
+      final last = ref
+          .read(sharedPreferencesProvider)
+          .getString(SettingsPrefsKeys.lastPlaceId);
+      final i = locations.indexWhere((l) => l.id == last);
+      _index = i < 0 ? 0 : i;
+      _pageCtl = PageController(initialPage: _index);
+    }
     final clamped = _index.clamp(0, locations.length - 1);
     final multi = locations.length > 1;
     final topPad = MediaQuery.of(context).padding.top;
@@ -78,7 +90,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         PageView(
           controller: _page,
-          onPageChanged: (i) => setState(() => _index = i),
+          onPageChanged: (i) {
+            setState(() => _index = i);
+            // Remembered on this device only, like the places themselves.
+            ref
+                .read(sharedPreferencesProvider)
+                .setString(SettingsPrefsKeys.lastPlaceId, locations[i].id);
+          },
           children: [
             for (final loc in locations)
               ForecastView(location: loc, topInset: inset),

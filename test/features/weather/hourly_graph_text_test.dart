@@ -96,4 +96,24 @@ void main() {
           reason: 'nothing below the ladder\'s smallest step');
     }
   });
+
+  // Contest 9 ruling: the curve was re-fitted to each window's own min and
+  // max, so a one-degree day drew the same swing as a twenty-degree one.
+  // The band is anchored to today's range, with today's high and low drawn
+  // as two labelled references.
+  testWidgets('the curve is anchored to today\'s high and low', (tester) async {
+    final p = await _painterAt(tester, 1.0);
+    expect(p.dayHighC, 22);
+    expect(p.dayLowC, 12);
+    expect(p.yFor(22), closeTo(p.curveTop, 0.01));
+    expect(p.yFor(12), closeTo(p.curveBottom, 0.01));
+    // Window temperatures run 18-22; 18 sits 60% down the band, not at
+    // the bottom as a window fit would put it.
+    expect(p.yFor(18),
+        closeTo(p.curveTop + 0.4 * (p.curveBottom - p.curveTop), 0.01));
+    expect(p.referenceLabels, ['High 22°', 'Low 12°']);
+    // The dashed references are named in words above the graph.
+    expect(find.text('Dashed lines: today’s high 22° and low 12°'),
+        findsOneWidget);
+  });
 }

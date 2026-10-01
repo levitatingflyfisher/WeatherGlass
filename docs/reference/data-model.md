@@ -48,6 +48,9 @@ stored under the key `themeMode` as `system` / `light` / `dark` (the same string
 app stored as a `ThemeMode` name before, so old installs and backups read unchanged).
 None of these alter the request shape.
 
+One more key, not a setting: `lastPlaceId`, the saved place Home showed last, so a
+relaunch opens on it. It stays on this device and is not in backups.
+
 ## In-memory domain types
 
 [`features/weather/data/models.dart`](../../lib/features/weather/data/models.dart):
